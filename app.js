@@ -1,30 +1,27 @@
-const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv"; // <-- Replace with your published Google Sheet CSV link
-
+const sheetURL = "YOUR_CSV_LINK"; // Replace with your published Google Sheet CSV link
 let data = [];
 
-// Fetch data from Google Sheets
-fetch(sheetURL)
-  .then(res => res.text())
-  .then(csv => {
-    const rows = csv.split("\n").slice(1); // skip header row
-    data = rows.map(row => {
-      const cols = row.split(",");
-      return {
-        title: cols[0],
-        keywords: cols[1],
-        creator: cols[2],
-        link: cols[3]
-      };
-    });
+// Load CSV using PapaParse
+Papa.parse(sheetURL, {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function(results) {
+    data = results.data.map(row => ({
+      title: row.Title,
+      keywords: row.Keywords,
+      creator: row.Creator,
+      link: row.Link
+    }));
     render(data);
-  });
+  }
+});
 
-// Render the list
+// Render list
 function render(items) {
   const list = document.getElementById("list");
   list.innerHTML = "";
 
-  // Get favorites from localStorage
   const favs = JSON.parse(localStorage.getItem("favs") || "[]");
 
   items.forEach((item, index) => {
@@ -33,38 +30,47 @@ function render(items) {
     const li = document.createElement("li");
 
     li.innerHTML = `
-      <div>
-        <b>${item.title}</b> (${item.creator})<br>
-        <a href="${item.link}" target="_blank">Open</a>
+      <div class="row-header" onclick="toggleDetails(this)">
+        <button class="${isFav ? 'fav' : ''}" onclick="toggleFav(${index}); event.stopPropagation();">★</button>
+        <div class="header-text">${item.title} - ${item.creator}</div>
       </div>
-      <button class="${isFav ? 'fav' : ''}" onclick="toggleFav(${index})">★</button>
+      <div class="row-details">
+        <div>Keywords: ${item.keywords}</div>
+        <div>Link: <a href="${item.link}" target="_blank">${item.link}</a></div>
+      </div>
     `;
 
     list.appendChild(li);
   });
 }
 
-// Search functionality
+// Search
 document.getElementById("search").addEventListener("input", e => {
   const value = e.target.value.toLowerCase();
-
   const filtered = data.filter(item =>
     item.keywords.toLowerCase().includes(value)
   );
-
   render(filtered);
 });
 
-// Toggle favorite
+// Toggle favorites
 function toggleFav(index) {
   let favs = JSON.parse(localStorage.getItem("favs") || "[]");
-
   if (favs.includes(index)) {
     favs = favs.filter(i => i !== index);
   } else {
     favs.push(index);
   }
-
   localStorage.setItem("favs", JSON.stringify(favs));
-  render(data); // re-render to update star color
+  render(data);
+}
+
+// Toggle row details
+function toggleDetails(header) {
+  const details = header.nextElementSibling;
+  if (details.style.maxHeight) {
+    details.style.maxHeight = null;
+  } else {
+    details.style.maxHeight = details.scrollHeight + "px";
+  }
 }
