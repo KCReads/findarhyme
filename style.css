@@ -187,4 +187,41 @@ keywords {
     width: 100%;
     justify-content: flex-end;
   }
+  .card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* LEFT COLOR STRIP */
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 6px;
+  border-radius: 16px 0 0 16px;
+
+  background: linear-gradient(
+    to bottom,
+    #ff6b6b,
+    #feca57,
+    #48dbfb,
+    #1dd1a1,
+    #5f27cd
+  );
+
+  opacity: 0.9;
+}
+
+/* OPTIONAL: soft tinted background glow */
+.card {
+  background: linear-gradient(
+    to right,
+    rgba(255, 107, 107, 0.04),
+    rgba(72, 219, 251, 0.02),
+    #ffffff
+  );
+}
 }
