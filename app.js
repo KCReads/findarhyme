@@ -9,7 +9,7 @@ const favEl = document.getElementById("favoritesOnly");
 /* ======================
    LOAD CSV
 ====================== */
-Papa.parse("https://docs.google.com/spreadsheets/d/1oBCoB85maS9H3kuwi6I--UECvD2QA0dn/edit?usp=sharing&ouid=108872419024116163961&rtpof=true&sd=true", {
+Papa.parse("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv", {
   download: true,
   header: true,
   complete: function(results) {
