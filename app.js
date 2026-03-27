@@ -71,16 +71,28 @@ function createCard(item, index) {
         <div class="creator"></div>
       </div>
 
-      <button class="expand">▼</button>
-
     </div>
 
-    <div class="body hidden">
+    <div class="body">
+
       <div class="keywords"></div>
 
       <div class="links">
-        ${item.link ? `<a href="${item.link}" target="_blank">Watch</a>` : ""}
+
+        ${item.video
+          ? `<a href="${item.video}" target="_blank">▶ Video</a>`
+          : ""}
+
+        ${item.supplemental
+          ? `<a href="${item.supplemental}" target="_blank">📄 Supplemental</a>`
+          : ""}
+
+        ${item.link
+          ? `<a href="${item.link}" target="_blank">🔗 Main Link</a>`
+          : ""}
+
       </div>
+
     </div>
   `;
 
@@ -88,14 +100,8 @@ function createCard(item, index) {
   card.querySelector(".creator").textContent = item.creator || "";
   card.querySelector(".keywords").textContent = item.keywords || "";
 
-  /* FAVORITE */
   card.querySelector(".star").addEventListener("click", (e) => {
     toggleFavorite(id, e.target);
-  });
-
-  /* EXPAND */
-  card.querySelector(".expand").addEventListener("click", () => {
-    card.querySelector(".body").classList.toggle("hidden");
   });
 
   return card;
