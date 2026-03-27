@@ -1,4 +1,4 @@
-const sheetURL = "YOUR_PUBLISHED_CSV_LINK_HERE";
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv";
 
 let data = [];
 
