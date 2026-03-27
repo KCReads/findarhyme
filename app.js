@@ -1,101 +1,76 @@
-const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv";
-
+/***********************
+ * GLOBAL STATE
+ ***********************/
 let data = [];
 let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-// LOAD DATA
-Papa.parse(sheetURL, {
+
+/***********************
+ * LOAD CSV (PapaParse)
+ ***********************/
+Papa.parse("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv", {
   download: true,
   header: true,
-  skipEmptyLines: true,
-  complete: function(results) {
+  complete: function (results) {
 
-    data = results.data.map(row => ({
-      title: row["Title"] || "",
-      keywords: row["Keywords"] || "",
-      creator: row["Creator"] || "",
-      videoLink: row["Video"] || "",
-      supplementalLink: row["Supplemental"] || ""
+    data = results.data.map((row, index) => ({
+      id: index,
+      title: row.title || "",
+      keywords: row.keywords || "",
+      creator: row.creator || "",
+      video: row.video || "",
+      supplemental: row.supplemental || ""
     }));
 
     render(data);
   }
 });
 
-// ELEMENTS
-const searchInput = document.getElementById("search");
-const searchMode = document.getElementById("searchMode");
 
-// EVENTS
-searchInput.addEventListener("input", filterData);
-searchMode.addEventListener("change", filterData);
-
-// SEARCH
-function filterData() {
-  const value = searchInput.value.toLowerCase();
-  const mode = searchMode.value;
-
-  const filtered = data.filter(item => {
-
-    const title = item.title.toLowerCase();
-    const keywords = item.keywords.toLowerCase();
-    const creator = item.creator.toLowerCase();
-
-    if (value.trim() === "") return true;
-
-    if (mode === "title") return title.includes(value);
-    if (mode === "keywords") return keywords.includes(value);
-    if (mode === "creator") return creator.includes(value);
-
-    return (
-      title.includes(value) ||
-      keywords.includes(value) ||
-      creator.includes(value)
-    );
-  });
-
-  render(filtered);
-}
-
-// RENDER
+/***********************
+ * RENDER FUNCTION
+ ***********************/
 function render(items) {
   const list = document.getElementById("list");
+
+  if (!list) {
+    console.error("Missing #list element in HTML");
+    return;
+  }
+
   list.innerHTML = "";
 
-  items.forEach(item => {
+  items.forEach((item, index) => {
 
     const isFav = favorites.includes(item.id);
 
     const li = document.createElement("li");
 
     li.innerHTML = `
-      <!-- ⭐ TOP ROW (STAR + TITLE) -->
-      <div>
-        <button class="star-btn ${isFav ? 'star-on' : 'star-off'}"
+      <div class="row-top">
+
+        <button class="star-btn ${isFav ? "star-on" : "star-off"}"
           onclick="toggleFavorite(${item.id})">
           ★
         </button>
 
         <strong>${item.title}</strong> — ${item.creator}
+
       </div>
 
-      <!-- KEYWORDS -->
-      <div>
-        Keywords: ${item.keywords}
+      <div class="row-keywords">
+        ${item.keywords}
       </div>
 
-      <!-- LINKS -->
-      <div class="links">
+      <div class="row-links">
 
-        <a href="${item.videoLink}" target="_blank">
-          🎬 Video
-        </a>
+        ${item.video
+          ? `<a href="${item.video}" target="_blank">🎬 Video</a>`
+          : ""
+        }
 
-        ${
-          item.supplementalLink
-          ? `<a href="${item.supplementalLink}" target="_blank">
-               🔗 Supplemental
-             </a>`
-          : `<span>🔗 No Supplemental</span>`
+        ${item.supplemental
+          ? `<a href="${item.supplemental}" target="_blank">🔗 Supplemental</a>`
+          : ""
         }
 
       </div>
@@ -104,8 +79,13 @@ function render(items) {
     list.appendChild(li);
   });
 }
-// Favorites
-function toggleFavorite(id) {
+
+
+/***********************
+ * FAVORITES TOGGLE (IMPORTANT: window scope)
+ ***********************/
+window.toggleFavorite = function (id) {
+
   if (favorites.includes(id)) {
     favorites = favorites.filter(f => f !== id);
   } else {
@@ -113,5 +93,60 @@ function toggleFavorite(id) {
   }
 
   localStorage.setItem("favorites", JSON.stringify(favorites));
+
   render(data);
+};
+
+
+/***********************
+ * SEARCH + FILTER
+ ***********************/
+const searchInput = document.getElementById("search");
+const searchMode = document.getElementById("searchMode");
+const showFavoritesOnly = document.getElementById("favoritesOnly");
+
+if (searchInput && searchMode) {
+  searchInput.addEventListener("input", filterData);
+  searchMode.addEventListener("change", filterData);
+}
+
+if (showFavoritesOnly) {
+  showFavoritesOnly.addEventListener("change", filterData);
+}
+
+function filterData() {
+
+  const value = (searchInput?.value || "").toLowerCase();
+  const mode = searchMode?.value || "all";
+  const favOnly = showFavoritesOnly?.checked;
+
+  let filtered = data;
+
+  // ⭐ FAVORITES FILTER
+  if (favOnly) {
+    filtered = filtered.filter(item => favorites.includes(item.id));
+  }
+
+  // 🔍 SEARCH FILTER
+  filtered = filtered.filter(item => {
+
+    const title = item.title.toLowerCase();
+    const keywords = item.keywords.toLowerCase();
+    const creator = item.creator.toLowerCase();
+
+    if (!value) return true;
+
+    if (mode === "title") return title.includes(value);
+    if (mode === "keywords") return keywords.includes(value);
+    if (mode === "creator") return creator.includes(value);
+
+    // ALL
+    return (
+      title.includes(value) ||
+      keywords.includes(value) ||
+      creator.includes(value)
+    );
+  });
+
+  render(filtered);
 }
