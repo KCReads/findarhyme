@@ -1,3 +1,4 @@
+
 /***********************
  * GLOBAL STATE
  ***********************/
@@ -5,15 +6,15 @@ let data = [];
 let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
 
 /***********************
- * LOAD CSV (PapaParse)
+ * LOAD CSV
  ***********************/
 Papa.parse("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv", {
   download: true,
   header: true,
   complete: function (results) {
 
-    data = results.data.map((row, index) => ({
-      id: index,
+    data = results.data.map((row) => ({
+      id: String(row.id), // your 1001 column
       title: row.title || "",
       keywords: row.keywords || "",
       creator: row.creator || "",
@@ -27,19 +28,15 @@ Papa.parse("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7
 
 
 /***********************
- * RENDER FUNCTION
+ * RENDER
  ***********************/
 function render(items) {
   const list = document.getElementById("list");
-
-  if (!list) {
-    console.error("Missing #list element in HTML");
-    return;
-  }
+  if (!list) return;
 
   list.innerHTML = "";
 
-  items.forEach((item, index) => {
+  items.forEach((item) => {
 
     const isFav = favorites.includes(item.id);
 
@@ -49,29 +46,35 @@ function render(items) {
       <div class="row-top">
 
         <button class="star-btn ${isFav ? "star-on" : "star-off"}"
-          onclick="toggleFavorite(${item.id})">
+          onclick="toggleFavorite('${item.id}')">
           ★
         </button>
 
         <strong>${item.title}</strong> — ${item.creator}
 
+        <button class="expand-btn" onclick="toggleExpand(this)">
+          ▼
+        </button>
+
       </div>
 
-      <div class="row-keywords">
-        ${item.keywords}
-      </div>
+      <div class="row-body hidden">
 
-      <div class="row-links">
+        <div class="keywords">
+          ${item.keywords}
+        </div>
 
-        ${item.video
-          ? `<a href="${item.video}" target="_blank">🎬 Video</a>`
-          : ""
-        }
+        <div class="links">
+          ${item.video
+            ? `<a href="${item.video}" target="_blank">🎬 Video</a>`
+            : ""
+          }
 
-        ${item.supplemental
-          ? `<a href="${item.supplemental}" target="_blank">🔗 Supplemental</a>`
-          : ""
-        }
+          ${item.supplemental
+            ? `<a href="${item.supplemental}" target="_blank">🔗 Supplemental</a>`
+            : ""
+          }
+        </div>
 
       </div>
     `;
@@ -82,9 +85,10 @@ function render(items) {
 
 
 /***********************
- * FAVORITES TOGGLE (IMPORTANT: window scope)
+ * FAVORITES
  ***********************/
-window.toggleFavorite = function (id) {
+window.toggleFavorite = function(id) {
+  id = String(id);
 
   if (favorites.includes(id)) {
     favorites = favorites.filter(f => f !== id);
@@ -93,32 +97,36 @@ window.toggleFavorite = function (id) {
   }
 
   localStorage.setItem("favorites", JSON.stringify(favorites));
-
   render(data);
 };
 
 
 /***********************
- * SEARCH + FILTER
+ * EXPAND / COLLAPSE ROW
+ ***********************/
+window.toggleExpand = function(btn) {
+  const body = btn.closest("li").querySelector(".row-body");
+  body.classList.toggle("hidden");
+};
+
+
+/***********************
+ * SEARCH + FILTERS
  ***********************/
 const searchInput = document.getElementById("search");
 const searchMode = document.getElementById("searchMode");
-const showFavoritesOnly = document.getElementById("favoritesOnly");
+const favoritesOnly = document.getElementById("favoritesOnly");
 
-if (searchInput && searchMode) {
-  searchInput.addEventListener("input", filterData);
-  searchMode.addEventListener("change", filterData);
-}
+if (searchInput) searchInput.addEventListener("input", filterData);
+if (searchMode) searchMode.addEventListener("change", filterData);
+if (favoritesOnly) favoritesOnly.addEventListener("change", filterData);
 
-if (showFavoritesOnly) {
-  showFavoritesOnly.addEventListener("change", filterData);
-}
 
 function filterData() {
 
   const value = (searchInput?.value || "").toLowerCase();
   const mode = searchMode?.value || "all";
-  const favOnly = showFavoritesOnly?.checked;
+  const favOnly = favoritesOnly?.checked;
 
   let filtered = data;
 
@@ -130,17 +138,16 @@ function filterData() {
   // 🔍 SEARCH FILTER
   filtered = filtered.filter(item => {
 
+    if (!value) return true;
+
     const title = item.title.toLowerCase();
     const keywords = item.keywords.toLowerCase();
     const creator = item.creator.toLowerCase();
-
-    if (!value) return true;
 
     if (mode === "title") return title.includes(value);
     if (mode === "keywords") return keywords.includes(value);
     if (mode === "creator") return creator.includes(value);
 
-    // ALL
     return (
       title.includes(value) ||
       keywords.includes(value) ||
