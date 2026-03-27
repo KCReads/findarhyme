@@ -13,6 +13,8 @@ Papa.parse(sheetURL, {
       keywords: row.Keywords,
       creator: row.Creator,
       link: row.Link
+      supplementalLink: row.CreatorSite
+}));
     }));
     render(data);
     console.log(results.data[0]);
