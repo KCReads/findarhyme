@@ -32,9 +32,8 @@ body {
 #list {
   max-width: 1200px;
   margin: 0 auto;
-
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 12px;
 }
 
