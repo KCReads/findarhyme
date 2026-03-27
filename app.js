@@ -52,9 +52,15 @@ function render(items) {
 
   <div class="links-row">
 
-  <a class="link-btn video-btn" href="${item.videoLink}" target="_blank">
-    🎬 Watch Video
-  </a>
+  <div class="video-block">
+  <iframe
+    width="100%"
+    height="200"
+    src="${getEmbedUrl(item.videoLink)}"
+    frameborder="0"
+    allowfullscreen
+  ></iframe>
+</div>
 
   ${item.supplementalLink ? `
     <a class="link-btn supp-btn" href="${item.supplementalLink}" target="_blank">
