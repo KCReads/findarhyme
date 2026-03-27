@@ -128,4 +128,16 @@ function toggleDetails(header) {
   } else {
     details.style.maxHeight = details.scrollHeight + "px";
   }
+  // Inline Video
+  function getEmbedUrl(url) {
+  if (!url) return "";
+
+  // YouTube standard link → embed
+  const match = url.match(/v=([^&]+)/);
+  if (match) {
+    return `https://www.youtube.com/embed/${match[1]}`;
+  }
+
+  return url;
+}
 }
