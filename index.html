@@ -14,14 +14,18 @@
 <h1>Find My Rhyme</h1>
 
 <!-- SEARCH CONTROLS -->
-<select id="searchMode">
+<input type="text" id="search" placeholder="Search...">
+  <select id="searchMode">
   <option value="all">All Fields</option>
   <option value="title">Title</option>
   <option value="keywords">Keywords</option>
   <option value="creator">Creator</option>
 </select>
+<label>
+  <input type="checkbox" id="favoritesOnly">
+  Favorites only
+</label>
 
-<input type="text" id="search" placeholder="Search...">
   <p class="disclaimer">
   ⭐ Favorites are stored locally in your browser and will not sync across devices.
 </p>
