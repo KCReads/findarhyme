@@ -1,5 +1,4 @@
-const TSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=tsv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv"; // <- put your CSV link here
 
 let data = [];
 let favorites = new Set();
@@ -10,22 +9,30 @@ const modeEl = document.getElementById("searchMode");
 const favEl = document.getElementById("favoritesOnly");
 
 /* =========================
-   LOAD TSV (GOOGLE SHEETS)
+   LOAD CSV
 ========================= */
-Papa.parse(TSV_URL, {
+Papa.parse(CSV_URL, {
   download: true,
   header: true,
-  delimiter: "\t",
   skipEmptyLines: true,
 
   complete: function (results) {
+    console.log("RAW CSV:", results);
+
     data = cleanData(results.data);
+    console.log("CLEAN DATA:", data);
+
     renderAll();
+  },
+
+  error: function (err) {
+    console.error("CSV LOAD ERROR:", err);
+    listEl.innerHTML = "<p>Failed to load data.</p>";
   }
 });
 
 /* =========================
-   CLEAN HEADERS (CRITICAL)
+   CLEAN DATA SAFELY
 ========================= */
 function cleanData(rows) {
   return rows
@@ -43,7 +50,7 @@ function cleanData(rows) {
 }
 
 /* =========================
-   CREATE CARD ONCE
+   CREATE CARD
 ========================= */
 function createCard(item, index) {
   const id = item.id || item.title || index;
@@ -77,31 +84,25 @@ function createCard(item, index) {
     </div>
   `;
 
-  /* fill text safely */
   card.querySelector(".title").textContent = item.title || "";
   card.querySelector(".creator").textContent = item.creator || "";
   card.querySelector(".keywords").textContent = item.keywords || "";
 
-  /* STAR */
-  const starBtn = card.querySelector(".star");
-
-  starBtn.addEventListener("click", () => {
-    toggleFavorite(id, starBtn);
+  /* FAVORITE */
+  card.querySelector(".star").addEventListener("click", (e) => {
+    toggleFavorite(id, e.target);
   });
 
   /* EXPAND */
-  const expandBtn = card.querySelector(".expand");
-  const body = card.querySelector(".body");
-
-  expandBtn.addEventListener("click", () => {
-    body.classList.toggle("hidden");
+  card.querySelector(".expand").addEventListener("click", () => {
+    card.querySelector(".body").classList.toggle("hidden");
   });
 
   return card;
 }
 
 /* =========================
-   FAVORITES (NO RE-RENDER)
+   FAVORITES
 ========================= */
 function toggleFavorite(id, btn) {
   if (favorites.has(id)) {
@@ -116,21 +117,25 @@ function toggleFavorite(id, btn) {
 }
 
 /* =========================
-   RENDER ALL (ONCE ONLY)
+   RENDER
 ========================= */
 function renderAll() {
   listEl.innerHTML = "";
 
+  if (!data.length) {
+    listEl.innerHTML = "<p>No data found</p>";
+    return;
+  }
+
   data.forEach((item, index) => {
-    const card = createCard(item, index);
-    listEl.appendChild(card);
+    listEl.appendChild(createCard(item, index));
   });
 
   applyFilters();
 }
 
 /* =========================
-   FILTER (HIDE / SHOW ONLY)
+   FILTERS
 ========================= */
 function applyFilters() {
   const q = searchEl.value.toLowerCase();
@@ -142,8 +147,8 @@ function applyFilters() {
   cards.forEach(card => {
     const id = card.dataset.id;
 
-    const item = data.find(d =>
-      (d.id || d.title || "").toString() === id
+    const item = data.find(
+      d => (d.id || d.title || "").toString() === id
     );
 
     if (!item) return;
