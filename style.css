@@ -1,30 +1,26 @@
-/* =========================
-   BASE LAYOUT
-========================= */
 body {
   margin: 0;
   padding: 16px;
   font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #fff7fb, #f0f9ff);
+  background: #f7f9fc;
   color: #1f2937;
 }
 
 /* =========================
-   APP CONTAINER
-   (FORCES SINGLE COLUMN LIST)
-========================= */
+   LIST WRAPPER
+   ========================= */
 #list {
   max-width: 1400px;
   margin: 0 auto;
 
   display: flex;
-  flex-direction: column; /* CRITICAL: prevents multi-column cards */
+  flex-direction: column;
   gap: 12px;
 }
 
 /* =========================
-   ROW ITEM (MAIN DESIGN UNIT)
-========================= */
+   ROW ITEM (MAIN STRUCTURE)
+   ========================= */
 .card {
   display: flex;
   align-items: center;
@@ -35,23 +31,13 @@ body {
 
   padding: 12px 14px;
 
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 16px;
 
-  background: white;
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-
-  transition: all 0.15s ease;
-
-  /* subtle rainbow accent */
-  background-image: linear-gradient(
-    to right,
-    #fff,
-    #fff,
-    #fff,
-    #fff8fb
-  );
+  transition: 0.15s ease;
 }
 
 .card:hover {
@@ -60,39 +46,35 @@ body {
 }
 
 /* =========================
-   LEFT SIDE (TITLE AREA)
-========================= */
+   LEFT SECTION (TITLE)
+   ========================= */
 .top {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 10px;
 
   flex: 1;
-  min-width: 280px;
+  min-width: 240px;
 }
 
-/* TITLE */
 .title {
   font-size: 15px;
   font-weight: 700;
 }
 
-/* CREATOR / SMALL TEXT */
 .creator {
   font-size: 12px;
   color: #6b7280;
-  margin-left: 6px;
 }
 
 /* =========================
-   STAR ICON (FAVORITES)
-========================= */
+   STAR (FAVORITE)
+   ========================= */
 .star {
   font-size: 18px;
-  cursor: pointer;
-
   border: none;
   background: none;
+  cursor: pointer;
 
   opacity: 0.4;
   transition: 0.2s ease;
@@ -104,8 +86,8 @@ body {
 }
 
 /* =========================
-   KEYWORDS (RAINBOW PILLS)
-========================= */
+   KEYWORDS (MIDDLE COLUMN)
+   ========================= */
 keywords {
   display: flex;
   flex-wrap: wrap;
@@ -115,10 +97,10 @@ keywords {
   align-items: center;
 }
 
-/* individual keyword chip */
+/* pill tags */
 .pill {
   font-size: 11px;
-  padding: 3px 9px;
+  padding: 3px 8px;
   border-radius: 999px;
 
   background: #f1f5f9;
@@ -127,7 +109,7 @@ keywords {
   white-space: nowrap;
 }
 
-/* subtle rainbow variation for keywords */
+/* soft rainbow variation */
 .pill:nth-child(5n+1) { background: #ffe4e6; }
 .pill:nth-child(5n+2) { background: #e0f2fe; }
 .pill:nth-child(5n+3) { background: #fef9c3; }
@@ -135,16 +117,16 @@ keywords {
 .pill:nth-child(5n+5) { background: #ede9fe; }
 
 /* =========================
-   RIGHT SIDE LINKS
-========================= */
+   RIGHT ACTION LINKS
+   ========================= */
 .links {
   display: flex;
   gap: 8px;
   align-items: center;
+
   flex-shrink: 0;
 }
 
-/* icon buttons (video, links, etc.) */
 .icon-link {
   font-size: 12px;
 
@@ -167,16 +149,42 @@ keywords {
 }
 
 /* =========================
-   RESPONSIVE (LIBRARY SCREENS)
-========================= */
+   DESKTOP (ALIGNED ROW MODE)
+   ========================= */
+@media (min-width: 769px) {
+  .card {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .top,
+  keywords,
+  .links {
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* =========================
+   MOBILE (STACKED MODE)
+   ========================= */
 @media (max-width: 768px) {
   .card {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 10px;
+  }
+
+  .top {
+    width: 100%;
+  }
+
+  keywords {
+    width: 100%;
   }
 
   .links {
-    align-self: flex-end;
+    width: 100%;
+    justify-content: flex-end;
   }
 }
