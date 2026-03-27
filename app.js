@@ -15,6 +15,7 @@ Papa.parse(sheetURL, {
       link: row.Link
     }));
     render(data);
+    console.log(results.data[0]);
   }
 });
 
