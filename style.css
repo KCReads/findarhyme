@@ -1,13 +1,11 @@
-/* ---------- Base ---------- */
 body {
   font-family: 'Roboto', sans-serif;
   background: linear-gradient(to bottom, #f9fafb, #eef2f7);
-  color: #333;
   margin: 0;
   padding: 20px;
+  color: #333;
 }
 
-/* ---------- Header ---------- */
 .app-title {
   margin: 0;
   font-size: 28px;
@@ -21,7 +19,6 @@ body {
   font-size: 14px;
 }
 
-/* ---------- Search ---------- */
 #search {
   width: 100%;
   padding: 14px;
@@ -29,7 +26,6 @@ body {
   border-radius: 12px;
   border: none;
   margin-bottom: 20px;
-  box-sizing: border-box;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
@@ -39,28 +35,19 @@ body {
   box-shadow: 0 0 0 2px #1a73e8;
 }
 
-/* ---------- List ---------- */
 ul {
   padding: 0;
 }
 
-/* ---------- Card ---------- */
 #list li {
+  list-style: none;
   background: #fff;
   border-radius: 14px;
   padding: 14px 16px;
   margin-bottom: 14px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  list-style: none;
 }
 
-#list li:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-}
-
-/* ---------- Row header ---------- */
 .row-header {
   display: flex;
   align-items: center;
@@ -68,7 +55,6 @@ ul {
   cursor: pointer;
 }
 
-/* ---------- Star ---------- */
 #list button {
   font-size: 20px;
   background: none;
@@ -84,13 +70,11 @@ ul {
   color: #ddd;
 }
 
-/* ---------- Text ---------- */
 .header-text {
   font-size: 16px;
   font-weight: 500;
 }
 
-/* ---------- Dropdown ---------- */
 .row-details {
   max-height: 0;
   overflow: hidden;
@@ -101,24 +85,22 @@ ul {
   color: #555;
 }
 
-.row-details div {
-  margin-bottom: 6px;
-}
-
 .row-details a {
   color: #1a73e8;
   text-decoration: none;
-  font-weight: 500;
   word-break: break-all;
 }
 
-/* ---------- Mobile ---------- */
-@media (max-width: 600px) {
-  body {
-    padding: 12px;
-  }
+.links-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
 
-  .app-title {
-    font-size: 22px;
+@media (min-width: 600px) {
+  .links-row {
+    flex-direction: row;
+    justify-content: space-between;
   }
 }
