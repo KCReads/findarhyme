@@ -14,7 +14,7 @@ Papa.parse("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7
   complete: function (results) {
 
     data = results.data.map((row) => ({
-  id: String(row.ID || row.id),
+  id: String(row.ID || ""),
   title: row.Title || "",
   keywords: row.Keywords || "",
   creator: row.Creator || "",
