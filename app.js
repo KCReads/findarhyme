@@ -1,3 +1,6 @@
+const TSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=tsv";
+
 let data = [];
 let favorites = new Set();
 
@@ -6,23 +9,42 @@ const searchEl = document.getElementById("search");
 const modeEl = document.getElementById("searchMode");
 const favEl = document.getElementById("favoritesOnly");
 
-/* ======================
-   LOAD CSV
-====================== */
-Papa.parse("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv", {
+/* =========================
+   LOAD TSV (GOOGLE SHEETS)
+========================= */
+Papa.parse(TSV_URL, {
   download: true,
   header: true,
-  delimiter: ",",
+  delimiter: "\t",
   skipEmptyLines: true,
-  complete: function(results) {
-    data = results.data.filter(r => r && r.title);
+
+  complete: function (results) {
+    data = cleanData(results.data);
     renderAll();
   }
 });
 
-/* ======================
-   CREATE CARD (ONCE ONLY)
-====================== */
+/* =========================
+   CLEAN HEADERS (CRITICAL)
+========================= */
+function cleanData(rows) {
+  return rows
+    .map(row => {
+      const clean = {};
+
+      Object.keys(row).forEach(key => {
+        if (!key) return;
+        clean[key.trim().toLowerCase()] = row[key];
+      });
+
+      return clean;
+    })
+    .filter(row => row.title);
+}
+
+/* =========================
+   CREATE CARD ONCE
+========================= */
 function createCard(item, index) {
   const id = item.id || item.title || index;
 
@@ -30,10 +52,12 @@ function createCard(item, index) {
   card.className = "card";
   card.dataset.id = id;
 
+  const isFav = favorites.has(id);
+
   card.innerHTML = `
     <div class="top">
 
-      <button class="star off">★</button>
+      <button class="star ${isFav ? "on" : "off"}">★</button>
 
       <div class="title-block">
         <div class="title"></div>
@@ -73,36 +97,27 @@ function createCard(item, index) {
     body.classList.toggle("hidden");
   });
 
-  /* init star state */
-  updateStarUI(id, starBtn);
-
   return card;
 }
 
-/* ======================
-   FAVORITES
-====================== */
-function toggleFavorite(id, starBtn) {
+/* =========================
+   FAVORITES (NO RE-RENDER)
+========================= */
+function toggleFavorite(id, btn) {
   if (favorites.has(id)) {
     favorites.delete(id);
+    btn.classList.remove("on");
+    btn.classList.add("off");
   } else {
     favorites.add(id);
+    btn.classList.add("on");
+    btn.classList.remove("off");
   }
-
-  updateStarUI(id, starBtn);
 }
 
-/* update ONLY one star */
-function updateStarUI(id, starBtn) {
-  const isFav = favorites.has(id);
-
-  starBtn.classList.toggle("on", isFav);
-  starBtn.classList.toggle("off", !isFav);
-}
-
-/* ======================
-   RENDER ALL (ONLY ON LOAD / FILTER CHANGE)
-====================== */
+/* =========================
+   RENDER ALL (ONCE ONLY)
+========================= */
 function renderAll() {
   listEl.innerHTML = "";
 
@@ -111,12 +126,12 @@ function renderAll() {
     listEl.appendChild(card);
   });
 
-  applyFilters(); // apply initial filter
+  applyFilters();
 }
 
-/* ======================
+/* =========================
    FILTER (HIDE / SHOW ONLY)
-====================== */
+========================= */
 function applyFilters() {
   const q = searchEl.value.toLowerCase();
   const mode = modeEl.value;
@@ -128,7 +143,7 @@ function applyFilters() {
     const id = card.dataset.id;
 
     const item = data.find(d =>
-      (d.id || d.title) === id
+      (d.id || d.title || "").toString() === id
     );
 
     if (!item) return;
@@ -137,16 +152,16 @@ function applyFilters() {
 
     if (q) {
       if (mode === "title") {
-        match = item.title?.toLowerCase().includes(q);
+        match = (item.title || "").toLowerCase().includes(q);
       } else if (mode === "creator") {
-        match = item.creator?.toLowerCase().includes(q);
+        match = (item.creator || "").toLowerCase().includes(q);
       } else if (mode === "keywords") {
-        match = item.keywords?.toLowerCase().includes(q);
+        match = (item.keywords || "").toLowerCase().includes(q);
       } else {
         match =
-          item.title?.toLowerCase().includes(q) ||
-          item.creator?.toLowerCase().includes(q) ||
-          item.keywords?.toLowerCase().includes(q);
+          (item.title || "").toLowerCase().includes(q) ||
+          (item.creator || "").toLowerCase().includes(q) ||
+          (item.keywords || "").toLowerCase().includes(q);
       }
     }
 
@@ -158,9 +173,9 @@ function applyFilters() {
   });
 }
 
-/* ======================
+/* =========================
    EVENTS
-====================== */
+========================= */
 searchEl.addEventListener("input", applyFilters);
 modeEl.addEventListener("change", applyFilters);
 favEl.addEventListener("change", applyFilters);
