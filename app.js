@@ -9,7 +9,7 @@ const favEl = document.getElementById("favoritesOnly");
 /* ======================
    LOAD CSV
 ====================== */
-Papa.parse("data.csv", {
+Papa.parse("https://docs.google.com/spreadsheets/d/1oBCoB85maS9H3kuwi6I--UECvD2QA0dn/edit?usp=sharing&ouid=108872419024116163961&rtpof=true&sd=true", {
   download: true,
   header: true,
   complete: function(results) {
