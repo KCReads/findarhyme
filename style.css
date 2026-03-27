@@ -103,4 +103,45 @@ ul {
     flex-direction: row;
     justify-content: space-between;
   }
+  .links-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.link-btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.video-btn {
+  background: #1a73e8;
+  color: white;
+}
+
+.video-btn:hover {
+  background: #1558b0;
+}
+
+.supp-btn {
+  background: #f1f3f4;
+  color: #333;
+}
+
+.supp-btn:hover {
+  background: #e2e6ea;
+}
+
+.link-empty {
+  font-size: 13px;
+  color: #999;
+  padding: 10px 0;
+}
 }
