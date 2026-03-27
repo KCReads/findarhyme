@@ -17,12 +17,7 @@
   </header>
 
   <section class="controls">
-
-    <input
-      type="text"
-      id="search"
-      placeholder="Search songs, keywords, creators..."
-    />
+    <input id="search" placeholder="Search..." />
 
     <select id="searchMode">
       <option value="all">All</option>
@@ -31,19 +26,14 @@
       <option value="creator">Creator</option>
     </select>
 
-    <label class="favorites-toggle">
+    <label>
       <input type="checkbox" id="favoritesOnly" />
       Favorites only
     </label>
-
   </section>
 
-  <!-- FIXED: no more UL -->
-  <main>
-    <div id="list"></div>
-  </main>
+  <div id="list"></div>
 
   <script src="app.js"></script>
-
 </body>
 </html>
