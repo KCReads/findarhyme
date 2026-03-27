@@ -12,29 +12,137 @@ const favEl = document.getElementById("favoritesOnly");
 Papa.parse("data.csv", {
   download: true,
   header: true,
-  complete: function(results) {
-    data = results.data;
-    render();
+  complete: function (results) {
+    data = results.data
+      .filter(item => item && item.title); // safety cleanup
+
+    renderAll();
   }
 });
 
 /* ======================
-   RENDER
+   CREATE CARD (ONCE ONLY)
 ====================== */
-function render() {
+function createCard(item, index) {
+  const id = item.id || item.title || index;
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.dataset.id = id;
+
+  card.innerHTML = `
+    <div class="top">
+
+      <button class="star off">★</button>
+
+      <div class="title-block">
+        <div class="title"></div>
+        <div class="creator"></div>
+      </div>
+
+      <button class="expand">▼</button>
+
+    </div>
+
+    <div class="body hidden">
+      <div class="keywords"></div>
+
+      <div class="links">
+        ${item.link ? `<a href="${item.link}" target="_blank">Watch</a>` : ""}
+      </div>
+    </div>
+  `;
+
+  /* fill text safely */
+  card.querySelector(".title").textContent = item.title || "";
+  card.querySelector(".creator").textContent = item.creator || "";
+  card.querySelector(".keywords").textContent = item.keywords || "";
+
+  /* STAR */
+  const starBtn = card.querySelector(".star");
+
+  starBtn.addEventListener("click", () => {
+    toggleFavorite(id, starBtn);
+  });
+
+  /* EXPAND */
+  const expandBtn = card.querySelector(".expand");
+  const body = card.querySelector(".body");
+
+  expandBtn.addEventListener("click", () => {
+    body.classList.toggle("hidden");
+  });
+
+  /* init star state */
+  updateStarUI(id, starBtn);
+
+  return card;
+}
+
+/* ======================
+   FAVORITES
+====================== */
+function toggleFavorite(id, starBtn) {
+  if (favorites.has(id)) {
+    favorites.delete(id);
+  } else {
+    favorites.add(id);
+  }
+
+  updateStarUI(id, starBtn);
+}
+
+/* update ONLY one star */
+function updateStarUI(id, starBtn) {
+  const isFav = favorites.has(id);
+
+  starBtn.classList.toggle("on", isFav);
+  starBtn.classList.toggle("off", !isFav);
+}
+
+/* ======================
+   RENDER ALL (ONLY ON LOAD / FILTER CHANGE)
+====================== */
+function renderAll() {
   listEl.innerHTML = "";
 
-  let filtered = data.filter(item => {
-    const q = searchEl.value.toLowerCase();
-    const mode = modeEl.value;
+  data.forEach((item, index) => {
+    const card = createCard(item, index);
+    listEl.appendChild(card);
+  });
+
+  applyFilters(); // apply initial filter
+}
+
+/* ======================
+   FILTER (HIDE / SHOW ONLY)
+====================== */
+function applyFilters() {
+  const q = searchEl.value.toLowerCase();
+  const mode = modeEl.value;
+  const favOnly = favEl.checked;
+
+  const cards = listEl.querySelectorAll(".card");
+
+  cards.forEach(card => {
+    const id = card.dataset.id;
+
+    const item = data.find(d =>
+      (d.id || d.title) === id
+    );
+
+    if (!item) return;
 
     let match = true;
 
     if (q) {
-      if (mode === "title") match = item.title?.toLowerCase().includes(q);
-      else if (mode === "creator") match = item.creator?.toLowerCase().includes(q);
-      else if (mode === "keywords") match = item.keywords?.toLowerCase().includes(q);
-      else {
+      if (mode === "title") {
+        match = item.title?.toLowerCase().includes(q);
+      } else if (mode === "creator") {
+        match = item.creator?.toLowerCase().includes(q);
+      } else if (mode === "keywords") {
+        match = item.keywords?.toLowerCase().includes(q);
+      } else {
         match =
           item.title?.toLowerCase().includes(q) ||
           item.creator?.toLowerCase().includes(q) ||
@@ -42,65 +150,17 @@ function render() {
       }
     }
 
-    if (favEl.checked) {
-      match = match && favorites.has(item.title);
+    if (favOnly) {
+      match = match && favorites.has(id);
     }
 
-    return match;
-  });
-
-  filtered.forEach((item, index) => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const isFav = favorites.has(item.title);
-
-    card.innerHTML = `
-      <div class="top">
-        <button class="star ${isFav ? "on" : "off"}" data-id="${item.title}">★</button>
-
-        <div class="title-block">
-          <div class="title">${item.title}</div>
-          <div class="creator">${item.creator}</div>
-        </div>
-
-        <button class="expand">▼</button>
-      </div>
-
-      <div class="body hidden">
-        <div><b>Keywords:</b> ${item.keywords}</div>
-
-        <div class="links">
-          ${item.link ? `<a href="${item.link}" target="_blank">Watch</a>` : ""}
-        </div>
-      </div>
-    `;
-
-    /* STAR */
-    card.querySelector(".star").addEventListener("click", (e) => {
-      const id = e.target.dataset.id;
-
-      if (favorites.has(id)) {
-        favorites.delete(id);
-      } else {
-        favorites.add(id);
-      }
-
-      render();
-    });
-
-    /* EXPAND */
-    card.querySelector(".expand").addEventListener("click", () => {
-      card.querySelector(".body").classList.toggle("hidden");
-    });
-
-    listEl.appendChild(card);
+    card.style.display = match ? "block" : "none";
   });
 }
 
 /* ======================
    EVENTS
 ====================== */
-searchEl.addEventListener("input", render);
-modeEl.addEventListener("change", render);
-favEl.addEventListener("change", render);
+searchEl.addEventListener("input", applyFilters);
+modeEl.addEventListener("change", applyFilters);
+favEl.addEventListener("change", applyFilters);
