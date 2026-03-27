@@ -61,25 +61,43 @@ function render(items) {
   const list = document.getElementById("list");
   list.innerHTML = "";
 
-  items.forEach((item, index) => {
+  items.forEach(item => {
+
+    const isFav = favorites.includes(item.id);
 
     const li = document.createElement("li");
 
     li.innerHTML = `
+      <!-- ⭐ TOP ROW (STAR + TITLE) -->
       <div>
+        <button class="star-btn ${isFav ? 'star-on' : 'star-off'}"
+          onclick="toggleFavorite(${item.id})">
+          ★
+        </button>
+
         <strong>${item.title}</strong> — ${item.creator}
       </div>
 
-      <div>Keywords: ${item.keywords}</div>
+      <!-- KEYWORDS -->
+      <div>
+        Keywords: ${item.keywords}
+      </div>
 
+      <!-- LINKS -->
       <div class="links">
-        <a href="${item.videoLink}" target="_blank">🎬 Video</a>
+
+        <a href="${item.videoLink}" target="_blank">
+          🎬 Video
+        </a>
 
         ${
           item.supplementalLink
-          ? `<a href="${item.supplementalLink}" target="_blank">🔗 Supplemental</a>`
+          ? `<a href="${item.supplementalLink}" target="_blank">
+               🔗 Supplemental
+             </a>`
           : `<span>🔗 No Supplemental</span>`
         }
+
       </div>
     `;
 
