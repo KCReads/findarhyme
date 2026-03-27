@@ -1,3 +1,7 @@
+.card {
+  border-left: 10px solid red !important;
+}
+
 /* =========================
    BASE
 ========================= */
