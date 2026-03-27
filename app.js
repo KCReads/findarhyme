@@ -12,8 +12,8 @@ Papa.parse(sheetURL, {
       title: row.Title,
       keywords: row.Keywords,
       creator: row.Creator,
-      link: row.Link
-      supplementalLink: row.supplemental
+      video: row.Video
+      supplementalLink: row.Supplemental
 }));
     }));
     render(data);
