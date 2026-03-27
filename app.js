@@ -1,172 +1,106 @@
-
-/***********************
- * GLOBAL STATE
- ***********************/
 let data = [];
-let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+let favorites = new Set();
 
-/***********************
- * LOAD CSV
- ***********************/
-Papa.parse("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv", {
+const listEl = document.getElementById("list");
+const searchEl = document.getElementById("search");
+const modeEl = document.getElementById("searchMode");
+const favEl = document.getElementById("favoritesOnly");
+
+/* ======================
+   LOAD CSV
+====================== */
+Papa.parse("data.csv", {
   download: true,
   header: true,
-  complete: function (results) {
-
-    data = results.data.map((row) => ({
-  id: String(row.ID || ""),
-  title: row.Title || "",
-  keywords: row.Keywords || "",
-  creator: row.Creator || "",
-  video: row.Video || "",
-  supplemental: row.Supplemental || ""
-}));
-
-    render(data);
+  complete: function(results) {
+    data = results.data;
+    render();
   }
 });
 
+/* ======================
+   RENDER
+====================== */
+function render() {
+  listEl.innerHTML = "";
 
-/***********************
- * RENDER
- ***********************/
-function render(items) {
-  const list = document.getElementById("list");
-  if (!list) return;
+  let filtered = data.filter(item => {
+    const q = searchEl.value.toLowerCase();
+    const mode = modeEl.value;
 
-  list.innerHTML = "";
+    let match = true;
 
-  items.forEach((item) => {
+    if (q) {
+      if (mode === "title") match = item.title?.toLowerCase().includes(q);
+      else if (mode === "creator") match = item.creator?.toLowerCase().includes(q);
+      else if (mode === "keywords") match = item.keywords?.toLowerCase().includes(q);
+      else {
+        match =
+          item.title?.toLowerCase().includes(q) ||
+          item.creator?.toLowerCase().includes(q) ||
+          item.keywords?.toLowerCase().includes(q);
+      }
+    }
 
-    const isFav = favorites.includes(String(item.id));
+    if (favEl.checked) {
+      match = match && favorites.has(item.title);
+    }
 
-    const row = document.createElement("div");
-    row.className = "row";
-    row.dataset.id = item.id;
+    return match;
+  });
 
-    row.innerHTML = `
-      <div class="row-top">
+  filtered.forEach((item, index) => {
+    const card = document.createElement("div");
+    card.className = "card";
 
-        <button
-          class="star-btn ${isFav ? "star-on" : "star-off"}"
-          onclick="toggleFavorite('${item.id}')"
-          title="Favorite"
-        >
-          ★
-        </button>
+    const isFav = favorites.has(item.title);
+
+    card.innerHTML = `
+      <div class="top">
+        <button class="star ${isFav ? "on" : "off"}" data-id="${item.title}">★</button>
 
         <div class="title-block">
-          <div class="title">${item.title || "---"}</div>
-          <div class="creator">${item.creator || ""}</div>
+          <div class="title">${item.title}</div>
+          <div class="creator">${item.creator}</div>
         </div>
 
-        <button
-          class="expand-btn"
-          onclick="toggleExpand(this)"
-          title="More info"
-        >
-          ▼
-        </button>
-
+        <button class="expand">▼</button>
       </div>
 
-      <div class="row-body hidden">
-
-        <div class="keywords">
-          ${item.keywords || ""}
-        </div>
+      <div class="body hidden">
+        <div><b>Keywords:</b> ${item.keywords}</div>
 
         <div class="links">
-          ${item.video
-            ? `<a href="${item.video}" target="_blank">🎬 Video</a>`
-            : ""
-          }
-
-          ${item.supplemental
-            ? `<a href="${item.supplemental}" target="_blank">🔗 Supplemental</a>`
-            : ""
-          }
+          ${item.link ? `<a href="${item.link}" target="_blank">Watch</a>` : ""}
         </div>
-
       </div>
     `;
 
-    list.appendChild(row);
+    /* STAR */
+    card.querySelector(".star").addEventListener("click", (e) => {
+      const id = e.target.dataset.id;
+
+      if (favorites.has(id)) {
+        favorites.delete(id);
+      } else {
+        favorites.add(id);
+      }
+
+      render();
+    });
+
+    /* EXPAND */
+    card.querySelector(".expand").addEventListener("click", () => {
+      card.querySelector(".body").classList.toggle("hidden");
+    });
+
+    listEl.appendChild(card);
   });
 }
 
-
-/***********************
- * FAVORITES
- ***********************/
-function toggleFavorite(id) {
-  id = String(id);
-
-  if (favorites.includes(id)) {
-    favorites = favorites.filter(f => f !== id);
-  } else {
-    favorites.push(id);
-  }
-
-  localStorage.setItem("favorites", JSON.stringify(favorites));
-
-  render(data);
-};
-
-
-/***********************
- * EXPAND / COLLAPSE ROW
- ***********************/
-window.toggleExpand = function(btn) {
-  const body = btn.closest("li").querySelector(".row-body");
-  body.classList.toggle("hidden");
-};
-
-
-/***********************
- * SEARCH + FILTERS
- ***********************/
-const searchInput = document.getElementById("search");
-const searchMode = document.getElementById("searchMode");
-const favoritesOnly = document.getElementById("favoritesOnly");
-
-if (searchInput) searchInput.addEventListener("input", filterData);
-if (searchMode) searchMode.addEventListener("change", filterData);
-if (favoritesOnly) favoritesOnly.addEventListener("change", filterData);
-
-
-function filterData() {
-
-  const value = (searchInput?.value || "").toLowerCase();
-  const mode = searchMode?.value || "all";
-  const favOnly = favoritesOnly?.checked;
-
-  let filtered = data;
-
-  // ⭐ FAVORITES FILTER
-  if (favOnly) {
-    filtered = filtered.filter(item => favorites.includes(item.id));
-  }
-
-  // 🔍 SEARCH FILTER
-  filtered = filtered.filter(item => {
-
-    if (!value) return true;
-
-    const title = item.title.toLowerCase();
-    const keywords = item.keywords.toLowerCase();
-    const creator = item.creator.toLowerCase();
-
-    if (mode === "title") return title.includes(value);
-    if (mode === "keywords") return keywords.includes(value);
-    if (mode === "creator") return creator.includes(value);
-
-    return (
-      title.includes(value) ||
-      keywords.includes(value) ||
-      creator.includes(value)
-    );
-  });
-
-  render(filtered);
-}
+/* ======================
+   EVENTS
+====================== */
+searchEl.addEventListener("input", render);
+modeEl.addEventListener("change", render);
+favEl.addEventListener("change", render);
