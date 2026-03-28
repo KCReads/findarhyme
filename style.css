@@ -49,7 +49,7 @@ body {
   font-size: 28px;
 }
 
-/* PAGE WRAP */
+/* PAGE */
 .page-wrap {
   padding: 16px;
 }
@@ -67,7 +67,6 @@ body {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  align-items: center;
 }
 
 #search,
@@ -86,6 +85,7 @@ body {
   flex: 1;
 }
 
+/* FAVORITES */
 .favorites-row {
   display: flex;
   gap: 16px;
@@ -98,6 +98,7 @@ body {
   gap: 8px;
 }
 
+/* EMAIL */
 .email-tools {
   display: flex;
   gap: 10px;
@@ -117,6 +118,7 @@ body {
   opacity: 0.6;
 }
 
+/* NOTE */
 .favorites-note {
   font-size: 12px;
   background: rgba(255, 255, 255, 0.6);
@@ -224,26 +226,44 @@ body {
   align-items: center;
 }
 
-/* MOBILE FIXES */
+/* =========================
+   MOBILE FIX (FINAL)
+   ========================= */
 @media (max-width: 768px) {
-
-  /* 🔑 THIS IS THE IMPORTANT FIX */
-  #search,
-  #searchMode,
-  #emailAddress,
-  #emailFavoritesBtn,
-  .secondary-btn {
-    width: 100%;
-    padding: 5px 10px;
-    height: 34px;
-    min-height: 34px;
-    line-height: 1.2;
-    font-size: 14px;
-  }
 
   .control-row,
   .email-tools {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* 🔥 HARD FIX FOR TALL INPUTS */
+  #search,
+  #emailAddress,
+  #searchMode {
+    height: 34px;
+    min-height: 34px;
+    max-height: 34px;
+    padding: 0 10px;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  #emailFavoritesBtn,
+  .secondary-btn {
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+
+  /* remove iOS / mobile weird styles */
+  #search,
+  #emailAddress,
+  #searchMode {
+    appearance: none;
+    -webkit-appearance: none;
   }
 
   .card {
