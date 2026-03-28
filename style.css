@@ -28,14 +28,14 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 20px 45px;
+  padding: 10px 18px;
   border-radius: 999px;
   font-family: 'Nunito', sans-serif;
   font-weight: 800;
   font-size: 32px;
   color: #ffffff;
   background: linear-gradient(
-    10deg,
+    90deg,
     rgba(255, 255, 255, 1),
     rgba(248, 61, 92, 1),
     rgba(253, 75, 47, 1)
