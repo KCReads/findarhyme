@@ -241,11 +241,11 @@ body {
   #search,
   #emailAddress,
   #searchMode {
-    height: 34px;
-    min-height: 34px;
-    max-height: 34px;
+    height: 10px;
+    min-height: 10px;
+    max-height: 20px;
     padding: 0 10px;
-    font-size: 14px;
+    font-size: 10px;
     line-height: 1;
   }
 
