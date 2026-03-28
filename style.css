@@ -37,7 +37,7 @@ body {
   background: linear-gradient(
     135deg,
     rgba(72, 118, 187, 1),
-    rgba(72, 118, 187, .5),
+    rgba(72, 118, 187, 0.5),
     rgba(72, 118, 187, 1)
   );
   box-shadow:
@@ -85,7 +85,6 @@ body {
   flex: 1;
 }
 
-/* FAVORITES */
 .favorites-row {
   display: flex;
   gap: 16px;
@@ -98,7 +97,6 @@ body {
   gap: 8px;
 }
 
-/* EMAIL */
 .email-tools {
   display: flex;
   gap: 10px;
@@ -118,7 +116,6 @@ body {
   opacity: 0.6;
 }
 
-/* NOTE */
 .favorites-note {
   font-size: 12px;
   background: rgba(255, 255, 255, 0.6);
@@ -133,6 +130,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.load-error {
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 12px;
 }
 
 /* CARD */
@@ -165,8 +168,18 @@ body {
 
 /* COLUMNS */
 .top { flex: 1.4; }
-.keywords { flex: 2; display: flex; flex-wrap: wrap; gap: 6px; }
-.links { flex: 1.2; display: flex; justify-content: flex-end; gap: 10px; }
+.keywords {
+  flex: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.links {
+  flex: 1.2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
 /* LEFT */
 .top-main {
@@ -190,6 +203,8 @@ body {
   border-radius: 999px;
   border: 1px solid #e5e7eb;
   cursor: pointer;
+  background: #f1f5f9;
+  font-family: inherit;
 }
 
 .pill:nth-child(5n+1) { background: #ffe4e6; }
@@ -201,6 +216,10 @@ body {
 .language-pill {
   border-width: 2px;
   font-weight: 700;
+}
+
+.pill:hover {
+  transform: translateY(-1px);
 }
 
 /* STAR */
@@ -226,10 +245,27 @@ body {
   align-items: center;
 }
 
-/* =========================
-   MOBILE FIX (FINAL)
-   ========================= */
+/* MOBILE FIX */
 @media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 24px;
+    padding: 10px 14px;
+    gap: 8px;
+    background: linear-gradient(
+      135deg,
+      rgba(72, 118, 187, 1),
+      rgba(72, 118, 187, 0.5),
+      rgba(72, 118, 187, 1)
+    );
+  }
+
+  .title-icon {
+    font-size: 22px;
+  }
+
+  .page-wrap {
+    padding: 12px;
+  }
 
   .control-row,
   .email-tools {
@@ -237,33 +273,30 @@ body {
     align-items: stretch;
   }
 
-  /* 🔥 HARD FIX FOR TALL INPUTS */
   #search,
   #emailAddress,
   #searchMode {
+    width: 100%;
+    box-sizing: border-box;
     height: 34px;
     min-height: 34px;
     max-height: 34px;
     padding: 0 10px;
     font-size: 14px;
     line-height: 1;
+    appearance: none;
+    -webkit-appearance: none;
   }
 
   #emailFavoritesBtn,
   .secondary-btn {
+    width: 100%;
+    box-sizing: border-box;
     height: 36px;
     min-height: 36px;
     max-height: 36px;
     padding: 0 10px;
     font-size: 14px;
-  }
-
-  /* remove iOS / mobile weird styles */
-  #search,
-  #emailAddress,
-  #searchMode {
-    appearance: none;
-    -webkit-appearance: none;
   }
 
   .card {
@@ -273,5 +306,6 @@ body {
 
   .links {
     justify-content: flex-end;
+    flex-wrap: wrap;
   }
 }
