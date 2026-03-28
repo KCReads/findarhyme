@@ -1,213 +1,153 @@
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv"; // <- put your CSV link here
-
-let data = [];
+let allData = [];
 let favorites = new Set();
 
-const listEl = document.getElementById("list");
-const searchEl = document.getElementById("search");
-const modeEl = document.getElementById("searchMode");
-const favEl = document.getElementById("favoritesOnly");
+// =========================
+// LOAD CSV (PapaParse)
+// =========================
+fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuB3lP6poEiXufRP7C_pdB3ZHz4WB82Zg5JmLSUg_BvjoC7xM5BDqG5PhdZOFg/pub?gid=1251597746&single=true&output=csv")
+  .then(res => res.text())
+  .then(csv => {
+    const parsed = Papa.parse(csv, {
+      header: true,
+      skipEmptyLines: true
+    });
 
-/* =========================
-   LOAD CSV
-========================= */
-Papa.parse(CSV_URL, {
-  download: true,
-  header: true,
-  skipEmptyLines: true,
+    allData = parsed.data;
 
-  complete: function (results) {
-    console.log("RAW CSV:", results);
+    renderList(allData);
+  });
 
-    data = cleanData(results.data);
-    console.log("CLEAN DATA:", data);
+// =========================
+// DOM ELEMENTS
+// =========================
+const searchInput = document.getElementById("search");
+const searchMode = document.getElementById("searchMode");
+const favoritesOnly = document.getElementById("favoritesOnly");
+const list = document.getElementById("list");
 
-    renderAll();
-  },
+// =========================
+// EVENTS (LIVE FILTERING)
+// =========================
+searchInput.addEventListener("input", filterAndRender);
+searchMode.addEventListener("change", filterAndRender);
+favoritesOnly.addEventListener("change", filterAndRender);
 
-  error: function (err) {
-    console.error("CSV LOAD ERROR:", err);
-    listEl.innerHTML = "<p>Failed to load data.</p>";
-  }
-});
+// =========================
+// FILTER LOGIC
+// =========================
+function filterAndRender() {
+  const query = searchInput.value.toLowerCase().trim();
+  const mode = searchMode.value;
+  const favOnly = favoritesOnly.checked;
 
-/* =========================
-   CLEAN DATA SAFELY
-========================= */
-function cleanData(rows) {
-  return rows
-    .map(row => {
-      const clean = {};
+  let filtered = allData.filter(item => {
 
-      Object.keys(row).forEach(key => {
-        if (!key) return;
-        clean[key.trim().toLowerCase()] = row[key];
+    // FAVORITES FILTER
+    if (favOnly && !favorites.has(item.title)) {
+      return false;
+    }
+
+    if (!query) return true;
+
+    const title = (item.title || "").toLowerCase();
+    const creator = (item.creator || "").toLowerCase();
+    const keywords = (item.keywords || "").toLowerCase();
+
+    if (mode === "all") {
+      return (
+        title.includes(query) ||
+        creator.includes(query) ||
+        keywords.includes(query)
+      );
+    }
+
+    if (mode === "title") return title.includes(query);
+    if (mode === "creator") return creator.includes(query);
+    if (mode === "keywords") return keywords.includes(query);
+
+    return true;
+  });
+
+  renderList(filtered);
+}
+
+// =========================
+// RENDER LIST
+// =========================
+function renderList(data) {
+  list.innerHTML = "";
+
+  data.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // LEFT
+    const top = document.createElement("div");
+    top.className = "top";
+
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = item.title || "";
+
+    const creator = document.createElement("div");
+    creator.className = "creator";
+    creator.textContent = item.creator || "";
+
+    top.appendChild(title);
+    top.appendChild(creator);
+
+    // MIDDLE (KEYWORDS)
+    const keywords = document.createElement("div");
+    keywords.className = "keywords";
+
+    (item.keywords || "")
+      .split(",")
+      .map(k => k.trim())
+      .filter(Boolean)
+      .forEach(k => {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = k;
+        keywords.appendChild(pill);
       });
 
-      return clean;
-    })
-    .filter(row => row.title);
-}
+    // RIGHT (LINKS + FAVORITE)
+    const links = document.createElement("div");
+    links.className = "links";
 
-/* =========================
-   CREATE CARD
-========================= */
-function createCard(item, index) {
-  const id = item.id || item.title || index;
+    // FAVORITE BUTTON
+    const star = document.createElement("button");
+    star.className = "icon-link";
+    star.textContent = favorites.has(item.title) ? "★" : "☆";
 
-  const card = document.createElement("div");
-  card.className = "card";
-  card.dataset.id = id;
-
-  const isFav = favorites.has(id);
-
-  card.innerHTML = `
-    <div class="top">
-
-      <button class="star ${isFav ? "on" : "off"}" title="Favorite">
-        ★
-      </button>
-
-      <div class="title-block">
-        <div class="title"></div>
-        <div class="creator"></div>
-      </div>
-
-    </div>
-
-    <div class="keywords"></div>
-
-    <div class="links">
-
-      ${item.video ? `
-        <a href="${item.video}" target="_blank" class="icon-link">
-          🎬 Video
-        </a>
-      ` : ""}
-
-      ${item.supplemental ? `
-        <a href="${item.supplemental}" target="_blank" class="icon-link">
-          📄 Guide
-        </a>
-      ` : ""}
-
-      ${item.link ? `
-        <a href="${item.link}" target="_blank" class="icon-link">
-          🔗 Link
-        </a>
-      ` : ""}
-
-    </div>
-  `;
-
-  card.querySelector(".title").textContent = item.title || "";
-  card.querySelector(".creator").textContent = item.creator || "";
-
-  /* KEYWORDS → pill formatting */
-  const keywordsEl = card.querySelector(".keywords");
-
-  const keywords = (item.keywords || "")
-    .split(",")
-    .map(k => k.trim())
-    .filter(Boolean);
-
-  keywords.forEach(k => {
-    const pill = document.createElement("span");
-    pill.className = "pill";
-    pill.textContent = k;
-    keywordsEl.appendChild(pill);
-  });
-
-  /* STAR ICON */
-  const starBtn = card.querySelector(".star");
-
-  starBtn.addEventListener("click", () => {
-    toggleFavorite(id, starBtn);
-  });
-
-  return card;
-}
-
-/* =========================
-   FAVORITES
-========================= */
-function toggleFavorite(id, btn) {
-  if (favorites.has(id)) {
-    favorites.delete(id);
-    btn.classList.remove("on");
-    btn.classList.add("off");
-  } else {
-    favorites.add(id);
-    btn.classList.add("on");
-    btn.classList.remove("off");
-  }
-}
-
-/* =========================
-   RENDER
-========================= */
-function renderAll() {
-  listEl.innerHTML = "";
-
-  if (!data.length) {
-    listEl.innerHTML = "<p>No data found</p>";
-    return;
-  }
-
-  data.forEach((item, index) => {
-    listEl.appendChild(createCard(item, index));
-  });
-
-  applyFilters();
-}
-
-/* =========================
-   FILTERS
-========================= */
-function applyFilters() {
-  const q = searchEl.value.toLowerCase();
-  const mode = modeEl.value;
-  const favOnly = favEl.checked;
-
-  const cards = listEl.querySelectorAll(".card");
-
-  cards.forEach(card => {
-    const id = card.dataset.id;
-
-    const item = data.find(
-      d => (d.id || d.title || "").toString() === id
-    );
-
-    if (!item) return;
-
-    let match = true;
-
-    if (q) {
-      if (mode === "title") {
-        match = (item.title || "").toLowerCase().includes(q);
-      } else if (mode === "creator") {
-        match = (item.creator || "").toLowerCase().includes(q);
-      } else if (mode === "keywords") {
-        match = (item.keywords || "").toLowerCase().includes(q);
+    star.addEventListener("click", () => {
+      if (favorites.has(item.title)) {
+        favorites.delete(item.title);
       } else {
-        match =
-          (item.title || "").toLowerCase().includes(q) ||
-          (item.creator || "").toLowerCase().includes(q) ||
-          (item.keywords || "").toLowerCase().includes(q);
+        favorites.add(item.title);
       }
+
+      filterAndRender();
+    });
+
+    links.appendChild(star);
+
+    // OPTIONAL LINK (if you have one in CSV)
+    if (item.link) {
+      const link = document.createElement("a");
+      link.className = "icon-link";
+      link.href = item.link;
+      link.target = "_blank";
+      link.textContent = "Open";
+
+      links.appendChild(link);
     }
 
-    if (favOnly) {
-      match = match && favorites.has(id);
-    }
+    // BUILD CARD
+    card.appendChild(top);
+    card.appendChild(keywords);
+    card.appendChild(links);
 
-    card.style.display = match ? "block" : "none";
+    list.appendChild(card);
   });
 }
-
-/* =========================
-   EVENTS
-========================= */
-searchEl.addEventListener("input", applyFilters);
-modeEl.addEventListener("change", applyFilters);
-favEl.addEventListener("change", applyFilters);
