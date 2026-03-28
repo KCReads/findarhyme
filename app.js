@@ -37,10 +37,11 @@ fetch(SHEET_URL)
   .then((csv) => {
     const parsed = Papa.parse(csv, {
       header: true,
-      skipEmptyLines: true
+      skipEmptyLines: true,
+      transformHeader: (header) => header.trim()
     });
 
-    allData = parsed.data;
+    allData = parsed.data.map((item, index) => normalizeItem(item, index));
     filterAndRender();
   })
   .catch((err) => {
@@ -70,6 +71,25 @@ emailAddress.addEventListener("input", () => {
 
 function safeValue(value) {
   return (value || "").toString().toLowerCase().trim();
+}
+
+function normalizeItem(item, index) {
+  const normalized = {
+    ID: (item.ID || "").toString().trim(),
+    Title: (item.Title || "").toString().trim(),
+    Keywords: (item.Keywords || "").toString().trim(),
+    Language: (item.Language || "").toString().trim(),
+    Creator: (item.Creator || "").toString().trim(),
+    Video: (item.Video || "").toString().trim(),
+    Supplemental: (item.Supplemental || "").toString().trim()
+  };
+
+  normalized._key = normalized.ID ? `id:${normalized.ID}` : `row:${index}`;
+  return normalized;
+}
+
+function getItemKey(item) {
+  return item._key;
 }
 
 function loadFavorites() {
@@ -126,24 +146,21 @@ function saveRecent() {
   }
 }
 
-function markRecent(id) {
-  const itemId = String(id);
-
-  recent = recent.filter((x) => x !== itemId);
-  recent.unshift(itemId);
+function markRecent(itemKey) {
+  recent = recent.filter((x) => x !== itemKey);
+  recent.unshift(itemKey);
   recent = recent.slice(0, 50);
-
   saveRecent();
 }
 
-function toggleFavorite(itemId) {
-  if (favorites.has(itemId)) {
-    favorites.delete(itemId);
+function toggleFavorite(itemKey) {
+  if (favorites.has(itemKey)) {
+    favorites.delete(itemKey);
   } else {
-    favorites.add(itemId);
+    favorites.add(itemKey);
   }
 
-  markRecent(itemId);
+  markRecent(itemKey);
   saveFavorites();
   filterAndRender();
 }
@@ -151,6 +168,12 @@ function toggleFavorite(itemId) {
 function applyKeywordSearch(keyword) {
   searchMode.value = "keywords";
   searchInput.value = keyword;
+  filterAndRender();
+}
+
+function applyLanguageSearch(language) {
+  searchMode.value = "language";
+  searchInput.value = language;
   filterAndRender();
 }
 
@@ -169,7 +192,7 @@ function clearFavorites() {
 }
 
 function getFavoriteItems() {
-  return allData.filter((item) => favorites.has(String(item.ID || "")));
+  return allData.filter((item) => favorites.has(getItemKey(item)));
 }
 
 function buildFavoritesText() {
@@ -261,10 +284,10 @@ function filterAndRender() {
   const recFirst = recentFirst.checked;
 
   let filtered = allData.filter((item) => {
-    const id = String(item.ID || "");
+    const itemKey = getItemKey(item);
 
-    if (favOnly && !favorites.has(id)) return false;
-    if (recOnly && !recent.includes(id)) return false;
+    if (favOnly && !favorites.has(itemKey)) return false;
+    if (recOnly && !recent.includes(itemKey)) return false;
 
     if (!query) return true;
 
@@ -291,14 +314,14 @@ function filterAndRender() {
   });
 
   filtered.sort((a, b) => {
-    const aId = String(a.ID || "");
-    const bId = String(b.ID || "");
+    const aKey = getItemKey(a);
+    const bKey = getItemKey(b);
 
-    const aFav = favorites.has(aId);
-    const bFav = favorites.has(bId);
+    const aFav = favorites.has(aKey);
+    const bFav = favorites.has(bKey);
 
-    const aRec = recent.indexOf(aId);
-    const bRec = recent.indexOf(bId);
+    const aRec = recent.indexOf(aKey);
+    const bRec = recent.indexOf(bKey);
 
     if (recFirst && aRec !== bRec) {
       return (aRec === -1 ? Infinity : aRec) - (bRec === -1 ? Infinity : bRec);
@@ -319,7 +342,7 @@ function renderList(data) {
   list.innerHTML = "";
 
   data.forEach((item) => {
-    const itemId = String(item.ID || "");
+    const itemKey = getItemKey(item);
 
     const card = document.createElement("div");
     card.className = "card";
@@ -337,12 +360,12 @@ function renderList(data) {
     star.textContent = "★";
     star.setAttribute("aria-label", "Toggle favorite");
 
-    if (favorites.has(itemId)) {
+    if (favorites.has(itemKey)) {
       star.classList.add("fav");
     }
 
     star.addEventListener("click", () => {
-      toggleFavorite(itemId);
+      toggleFavorite(itemKey);
     });
 
     const textBlock = document.createElement("div");
@@ -359,23 +382,8 @@ function renderList(data) {
     creator.className = "creator";
     creator.textContent = item.Creator || "";
 
-    const language = document.createElement("div");
-    language.className = "language";
-    language.textContent = item.Language || "";
-
     if (item.Creator) {
       meta.appendChild(creator);
-    }
-
-    if (item.Creator && item.Language) {
-      const separator = document.createElement("span");
-      separator.className = "meta-separator";
-      separator.textContent = "•";
-      meta.appendChild(separator);
-    }
-
-    if (item.Language) {
-      meta.appendChild(language);
     }
 
     textBlock.appendChild(title);
@@ -388,6 +396,20 @@ function renderList(data) {
     // MIDDLE
     const keywords = document.createElement("div");
     keywords.className = "keywords";
+
+    if (item.Language) {
+      const languagePill = document.createElement("button");
+      languagePill.className = "pill language-pill";
+      languagePill.type = "button";
+      languagePill.textContent = item.Language;
+      languagePill.setAttribute("aria-label", `Search language ${item.Language}`);
+
+      languagePill.addEventListener("click", () => {
+        applyLanguageSearch(item.Language);
+      });
+
+      keywords.appendChild(languagePill);
+    }
 
     (item.Keywords || "")
       .split(",")
@@ -419,7 +441,7 @@ function renderList(data) {
       videoLink.rel = "noopener noreferrer";
       videoLink.textContent = "🎬 Video";
       videoLink.addEventListener("click", () => {
-        markRecent(itemId);
+        markRecent(itemKey);
       });
       links.appendChild(videoLink);
     }
@@ -432,7 +454,7 @@ function renderList(data) {
       supplementalLink.rel = "noopener noreferrer";
       supplementalLink.textContent = "📎 Extra";
       supplementalLink.addEventListener("click", () => {
-        markRecent(itemId);
+        markRecent(itemKey);
       });
       links.appendChild(supplementalLink);
     }
