@@ -101,17 +101,34 @@ function renderList(data) {
     title.className = "title";
     title.textContent = item.Title || "";
 
+    const meta = document.createElement("div");
+    meta.className = "meta";
+
     const creator = document.createElement("div");
     creator.className = "creator";
     creator.textContent = item.Creator || "";
 
     const language = document.createElement("div");
-    language.className = "creator";
+    language.className = "language";
     language.textContent = item.Language || "";
 
+    if (item.Creator) {
+      meta.appendChild(creator);
+    }
+
+    if (item.Creator && item.Language) {
+      const separator = document.createElement("span");
+      separator.className = "meta-separator";
+      separator.textContent = "•";
+      meta.appendChild(separator);
+    }
+
+    if (item.Language) {
+      meta.appendChild(language);
+    }
+
     top.appendChild(title);
-    top.appendChild(creator);
-    top.appendChild(language);
+    top.appendChild(meta);
 
     // MIDDLE
     const keywords = document.createElement("div");
@@ -132,11 +149,11 @@ function renderList(data) {
     const links = document.createElement("div");
     links.className = "links";
 
-    // STAR
     const star = document.createElement("button");
     star.className = "star";
     star.type = "button";
     star.textContent = "★";
+    star.setAttribute("aria-label", "Toggle favorite");
 
     if (favorites.has(itemId)) {
       star.classList.add("fav");
@@ -154,7 +171,6 @@ function renderList(data) {
 
     links.appendChild(star);
 
-    // VIDEO LINK
     if (item.Video) {
       const videoLink = document.createElement("a");
       videoLink.className = "icon-link";
@@ -165,7 +181,6 @@ function renderList(data) {
       links.appendChild(videoLink);
     }
 
-    // SUPPLEMENTAL LINK
     if (item.Supplemental) {
       const supplementalLink = document.createElement("a");
       supplementalLink.className = "icon-link";
@@ -176,7 +191,6 @@ function renderList(data) {
       links.appendChild(supplementalLink);
     }
 
-    // BUILD
     card.appendChild(top);
     card.appendChild(keywords);
     card.appendChild(links);
