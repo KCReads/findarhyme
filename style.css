@@ -37,7 +37,7 @@ body {
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, .5),
-    rgba(72, 118, 187, 1),
+    rgba(72, 118, 187, .5),
     rgba(72, 118, 187, .5)
   );
   box-shadow:
