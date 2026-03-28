@@ -397,19 +397,23 @@ function renderList(data) {
     const keywords = document.createElement("div");
     keywords.className = "keywords";
 
-    if (item.Language) {
-      const languagePill = document.createElement("button");
-      languagePill.className = "pill language-pill";
-      languagePill.type = "button";
-      languagePill.textContent = item.Language;
-      languagePill.setAttribute("aria-label", `Search language ${item.Language}`);
+    (item.Language || "")
+      .split(",")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .forEach((l) => {
+        const languagePill = document.createElement("button");
+        languagePill.className = "pill language-pill";
+        languagePill.type = "button";
+        languagePill.textContent = l;
+        languagePill.setAttribute("aria-label", `Search language ${l}`);
 
-      languagePill.addEventListener("click", () => {
-        applyLanguageSearch(item.Language);
+        languagePill.addEventListener("click", () => {
+          applyLanguageSearch(l);
+        });
+
+        keywords.appendChild(languagePill);
       });
-
-      keywords.appendChild(languagePill);
-    }
 
     (item.Keywords || "")
       .split(",")
