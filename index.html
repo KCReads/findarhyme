@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Find My Rhyme</title>
 
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -17,14 +17,14 @@
   </header>
 
   <section class="controls">
-
     <div class="control-row">
-      <input id="search" placeholder="Search..." />
+      <input id="search" type="text" placeholder="Search..." />
 
       <select id="searchMode">
         <option value="all">All</option>
         <option value="title">Title</option>
         <option value="keywords">Keywords</option>
+        <option value="language">Language</option>
         <option value="creator">Creator</option>
       </select>
     </div>
@@ -33,7 +33,6 @@
       <input type="checkbox" id="favoritesOnly" />
       <label for="favoritesOnly">Favorites only</label>
     </div>
-
   </section>
 
   <div id="list"></div>
