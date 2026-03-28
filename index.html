@@ -1,442 +1,76 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background: #4876bb59;
-  color: #1f2937;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Find My Rhyme</title>
 
-/* HEADER */
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(8px);
-  background: rgba(72, 118, 187, 0.45);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 
-.header-inner {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 14px 16px;
-  text-align: center;
-}
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
 
-.app-header h1 {
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-family: 'Nunito', sans-serif;
-  font-weight: 800;
-  font-size: 32px;
-  letter-spacing: 0.4px;
-  line-height: 1;
-  color: #ffffff;
-  background: linear-gradient(
-    135deg,
-    rgba(95, 39, 205, 0.9),
-    rgba(72, 219, 251, 0.9),
-    rgba(29, 209, 161, 0.9)
-  );
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  text-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.28),
-    0 1px 2px rgba(0, 0, 0, 0.18);
-}
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <h1><span class="title-icon">🎵📚</span> Find My Rhyme</h1>
+    </div>
+  </header>
 
-.title-icon {
-  font-size: 28px;
-  line-height: 1;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
+  <main class="page-wrap">
+    <section class="controls">
+      <div class="control-row">
+        <input id="search" type="text" placeholder="Search..." />
 
-/* PAGE WRAP */
-.page-wrap {
-  padding: 16px;
-}
+        <select id="searchMode">
+          <option value="all">All</option>
+          <option value="title">Title</option>
+          <option value="keywords">Keywords</option>
+          <option value="language">Language</option>
+          <option value="creator">Creator</option>
+        </select>
+      </div>
 
-/* CONTROLS */
-.controls {
-  max-width: 1400px;
-  margin: 0 auto 16px auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+      <div class="favorites-row">
+        <div class="favorites">
+          <input type="checkbox" id="favoritesOnly" />
+          <label for="favoritesOnly">Favorites only</label>
+        </div>
 
-.control-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
+        <div class="favorites">
+          <input type="checkbox" id="favoritesFirst" />
+          <label for="favoritesFirst">Favorites first</label>
+        </div>
 
-#search,
-#searchMode,
-#emailAddress,
-#emailFavoritesBtn,
-.secondary-btn {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #d8deea;
-  background: rgba(255, 255, 255, 0.92);
-  font: inherit;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
+        <div class="favorites">
+          <input type="checkbox" id="recentOnly" />
+          <label for="recentOnly">Recent only</label>
+        </div>
 
-#search {
-  flex: 1 1 260px;
-  min-width: 0;
-}
+        <div class="favorites">
+          <input type="checkbox" id="recentFirst" />
+          <label for="recentFirst">Recent first</label>
+        </div>
+      </div>
 
-#searchMode {
-  flex: 0 0 auto;
-}
+      <div class="email-tools">
+        <input type="email" id="emailAddress" placeholder="Your email address" />
+        <button id="emailFavoritesBtn" type="button">Email my favorites</button>
+        <button id="copyFavoritesBtn" type="button" class="secondary-btn">Copy favorites</button>
+        <button id="clearFavoritesBtn" type="button" class="secondary-btn">Clear favorites</button>
+      </div>
 
-.favorites-row {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-}
+      <div class="favorites-note">
+        Favorites and recent activity are saved on your device only. They won’t sync across devices or browsers, but you can email or copy your favorites anytime.
+      </div>
+    </section>
 
-.favorites {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #1f2937;
-}
+    <div id="list"></div>
+  </main>
 
-.favorites input {
-  cursor: pointer;
-}
-
-.email-tools {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-#emailAddress {
-  min-width: 240px;
-  flex: 1 1 260px;
-}
-
-#emailFavoritesBtn,
-.secondary-btn {
-  cursor: pointer;
-}
-
-#emailFavoritesBtn:hover,
-.secondary-btn:hover {
-  background: #eef6ff;
-}
-
-.secondary-btn {
-  background: #fff;
-}
-
-.secondary-btn:hover {
-  background: #ffe4e6;
-  border-color: #fecaca;
-}
-
-.secondary-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.favorites-note {
-  font-size: 12px;
-  color: #4b5563;
-  background: rgba(255, 255, 255, 0.6);
-  padding: 8px 10px;
-  border-radius: 10px;
-  max-width: 700px;
-  line-height: 1.4;
-}
-
-/* LIST */
-#list {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.load-error {
-  padding: 16px;
-  background: #ffffff;
-  border-radius: 12px;
-}
-
-/* CARD */
-.card {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 24px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 14px 16px 14px 24px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 10px;
-  background: linear-gradient(
-    to bottom,
-    #ff6b6b,
-    #feca57,
-    #48dbfb,
-    #1dd1a1,
-    #5f27cd
-  );
-  border-radius: 16px 0 0 16px;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
-}
-
-/* 3 COLUMN LAYOUT */
-.top,
-.keywords,
-.links {
-  min-width: 0;
-  display: flex;
-}
-
-.top {
-  flex: 1.4;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.keywords {
-  flex: 2;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.links {
-  flex: 1.15;
-  align-items: stretch;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-/* LEFT */
-.top-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  width: 100%;
-}
-
-.text-block {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.title {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.creator,
-.language {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.meta-separator {
-  color: #9ca3af;
-}
-
-/* PILLS */
-.pill {
-  font-size: 11px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  border: 1px solid #e5e7eb;
-  white-space: nowrap;
-  line-height: 1.4;
-  cursor: pointer;
-  font-family: inherit;
-  color: #1f2937;
-}
-
-.pill:nth-child(5n+1) { background: #ffe4e6; }
-.pill:nth-child(5n+2) { background: #e0f2fe; }
-.pill:nth-child(5n+3) { background: #fef9c3; }
-.pill:nth-child(5n+4) { background: #dcfce7; }
-.pill:nth-child(5n+5) { background: #ede9fe; }
-
-.pill:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-/* STAR BUTTON */
-.star {
-  font-size: 22px;
-  line-height: 1;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px 10px;
-  border-radius: 10px;
-  flex-shrink: 0;
-  color: #9ca3af;
-  align-self: center;
-}
-
-.star:hover {
-  background: #f1f5f9;
-}
-
-.star.fav {
-  color: #fbbf24;
-}
-
-/* LINKS */
-.icon-link {
-  font-size: 13px;
-  padding: 0 14px;
-  border-radius: 12px;
-  text-decoration: none;
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
-  color: #1f2937;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  min-height: 100%;
-}
-
-.icon-link:hover {
-  background: #eef6ff;
-}
-
-/* MOBILE */
-@media (max-width: 768px) {
-  .header-inner {
-    padding: 12px 12px;
-  }
-
-  .app-header h1 {
-    font-size: 24px;
-    padding: 10px 14px;
-    gap: 8px;
-  }
-
-  .title-icon {
-    font-size: 22px;
-  }
-
-  .page-wrap {
-    padding: 12px;
-  }
-
-  .control-row,
-  .email-tools {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  #search,
-  #searchMode,
-  #emailAddress,
-  #emailFavoritesBtn,
-  .secondary-btn {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 8px 10px;
-  }
-
-  .card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 18px;
-    padding: 16px 16px 16px 24px;
-  }
-
-  .top,
-  .keywords,
-  .links {
-    width: 100%;
-  }
-
-  .top {
-    align-items: flex-start;
-  }
-
-  .top-main {
-    align-items: flex-start;
-  }
-
-  .keywords {
-    justify-content: flex-start;
-    row-gap: 10px;
-    column-gap: 8px;
-    margin-bottom: 6px;
-  }
-
-  .links {
-    justify-content: flex-end;
-    align-items: center;
-    gap: 12px;
-    margin-top: 4px;
-    flex-wrap: wrap;
-  }
-
-  .star {
-    min-width: 40px;
-    min-height: 40px;
-    align-self: flex-start;
-  }
-
-  .icon-link {
-    min-height: auto;
-    padding: 8px 12px;
-    align-self: auto;
-  }
-}
+  <script src="app.js"></script>
+</body>
+</html>
