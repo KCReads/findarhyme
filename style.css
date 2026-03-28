@@ -6,17 +6,13 @@ body {
   color: #1f2937;
 }
 
-/* =========================
-   HEADER
-   ========================= */
+/* HEADER */
 header {
   max-width: 1400px;
   margin: 0 auto 12px auto;
 }
 
-/* =========================
-   CONTROLS (APP STYLE)
-   ========================= */
+/* CONTROLS */
 .controls {
   max-width: 1400px;
   margin: 0 auto 16px auto;
@@ -45,13 +41,9 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: #374151;
 }
 
-/* =========================
-   LIST WRAPPER
-   ========================= */
+/* LIST */
 #list {
   max-width: 1400px;
   margin: 0 auto;
@@ -61,14 +53,12 @@ header {
   gap: 14px;
 }
 
-/* =========================
-   CARD (AIRTABLE STYLE)
-   ========================= */
+/* CARD */
 .card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
 
   width: 100%;
   box-sizing: border-box;
@@ -81,20 +71,15 @@ header {
 
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
-
-  opacity: 1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* subtle "app feel" hover */
 .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 22px rgba(0,0,0,0.08);
 }
 
-/* =========================
-   LEFT / MIDDLE / RIGHT GRID
-   ========================= */
+/* 3 COLUMN LAYOUT */
 .top,
 .keywords,
 .links {
@@ -128,7 +113,7 @@ header {
   gap: 6px;
 }
 
-/* pills (more breathable + less cramped) */
+/* PILLS */
 .pill {
   font-size: 11px;
   padding: 4px 9px;
@@ -141,7 +126,6 @@ header {
   line-height: 1.4;
 }
 
-/* soft color variation */
 .pill:nth-child(5n+1) { background: #ffe4e6; }
 .pill:nth-child(5n+2) { background: #e0f2fe; }
 .pill:nth-child(5n+3) { background: #fef9c3; }
@@ -151,9 +135,31 @@ header {
 /* RIGHT */
 .links {
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
 }
 
+/* STAR BUTTON */
+.star {
+  font-size: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  padding: 6px 10px;
+  border-radius: 10px;
+
+  flex-shrink: 0;
+}
+
+.star:hover {
+  background: #f1f5f9;
+}
+
+.star.fav {
+  color: #fbbf24;
+}
+
+/* LINKS */
 .icon-link {
   font-size: 12px;
 
@@ -166,29 +172,16 @@ header {
   background: #f8fafc;
 
   color: #1f2937;
-
-  transition: 0.15s ease;
 }
 
-.icon-link:hover {
-  background: #e0f2fe;
-  border-color: #bae6fd;
-}
-
-/* =========================
-   MOBILE (APP STYLE STACK)
-   ========================= */
+/* MOBILE */
 @media (max-width: 768px) {
-
-  #list {
-    gap: 12px;
-  }
 
   .card {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
-    padding: 14px;
+    gap: 16px;
+    padding: 16px;
   }
 
   .top,
@@ -199,32 +192,16 @@ header {
 
   .keywords {
     justify-content: flex-start;
-    row-gap: 8px;
-    column-gap: 6px;
-
-    margin-bottom: 4px; /* fixes pill crowding */
+    row-gap: 10px;
+    column-gap: 8px;
   }
 
   .links {
     justify-content: flex-end;
   }
-}
 
-/* =========================
-   OPTIONAL: smooth appear feel
-   (works if JS adds/removes cards)
-   ========================= */
-.card {
-  animation: fadeIn 0.18s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .star {
+    min-width: 40px;
+    min-height: 40px;
   }
 }
