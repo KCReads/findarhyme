@@ -7,6 +7,49 @@ body {
 }
 
 /* =========================
+   HEADER
+   ========================= */
+header {
+  max-width: 1400px;
+  margin: 0 auto 12px auto;
+}
+
+/* =========================
+   CONTROLS (APP STYLE)
+   ========================= */
+.controls {
+  max-width: 1400px;
+  margin: 0 auto 16px auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+#search,
+#searchMode {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.favorites {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+/* =========================
    LIST WRAPPER
    ========================= */
 #list {
@@ -15,11 +58,11 @@ body {
 
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 /* =========================
-   CARD (BASE LAYOUT)
+   CARD (AIRTABLE STYLE)
    ========================= */
 .card {
   display: flex;
@@ -30,40 +73,42 @@ body {
   width: 100%;
   box-sizing: border-box;
 
-  padding: 12px 14px;
+  padding: 14px 16px;
 
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
 
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 
-  transition: 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
 
-  position: relative;
+  opacity: 1;
 }
 
+/* subtle "app feel" hover */
 .card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.08);
 }
 
 /* =========================
-   3-COLUMN DESKTOP LAYOUT
+   LEFT / MIDDLE / RIGHT GRID
    ========================= */
 .top,
 .keywords,
 .links {
   flex: 1;
-  min-width: 0; /* prevents overflow breaking layout */
+  min-width: 0;
   display: flex;
   align-items: center;
 }
 
-/* left column */
+/* LEFT */
 .top {
-  justify-content: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .title {
@@ -76,37 +121,37 @@ body {
   color: #6b7280;
 }
 
-/* middle column */
+/* MIDDLE */
 .keywords {
   justify-content: center;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-/* pill tags */
+/* pills (more breathable + less cramped) */
 .pill {
-  font-size: 10px;
-  padding: 3px 8px;
+  font-size: 11px;
+  padding: 4px 9px;
   border-radius: 999px;
 
   background: #f1f5f9;
-  border: 2px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
 
   white-space: nowrap;
+  line-height: 1.4;
 }
 
-/* soft rainbow variation */
+/* soft color variation */
 .pill:nth-child(5n+1) { background: #ffe4e6; }
 .pill:nth-child(5n+2) { background: #e0f2fe; }
 .pill:nth-child(5n+3) { background: #fef9c3; }
 .pill:nth-child(5n+4) { background: #dcfce7; }
 .pill:nth-child(5n+5) { background: #ede9fe; }
 
-/* right column */
+/* RIGHT */
 .links {
   justify-content: flex-end;
   gap: 8px;
-  flex-shrink: 0;
 }
 
 .icon-link {
@@ -131,46 +176,55 @@ body {
 }
 
 /* =========================
-   MOBILE LAYOUT
+   MOBILE (APP STYLE STACK)
    ========================= */
 @media (max-width: 768px) {
+
+  #list {
+    gap: 12px;
+  }
+
   .card {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
+    padding: 14px;
   }
 
   .top,
   .keywords,
   .links {
     width: 100%;
+  }
+
+  .keywords {
     justify-content: flex-start;
+    row-gap: 8px;
+    column-gap: 6px;
+
+    margin-bottom: 4px; /* fixes pill crowding */
   }
 
   .links {
     justify-content: flex-end;
   }
+}
 
-  /* optional left accent bar */
-  .card::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
+/* =========================
+   OPTIONAL: smooth appear feel
+   (works if JS adds/removes cards)
+   ========================= */
+.card {
+  animation: fadeIn 0.18s ease-out;
+}
 
-    width: 6px;
-    border-radius: 16px 0 0 16px;
-
-    background: linear-gradient(
-      to bottom,
-      #ff6b6b,
-      #feca57,
-      #48dbfb,
-      #1dd1a1,
-      #5f27cd
-    );
-
-    opacity: 0.9;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
