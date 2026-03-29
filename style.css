@@ -1,3 +1,4 @@
+/* BASE */
 body {
   margin: 0;
   padding: 0;
@@ -20,39 +21,11 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 14px 16px;
-  text-align: right;
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.nav-bar {
-  display: flex;
   gap: 16px;
 }
-
-.nav-bar a {
-  text-decoration: none;
-  font-family: 'Nunito', sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 999px;
-  transition: background 0.2s ease;
-}
-
-.nav-bar a:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-
-
-
-
-
-
-
 
 .app-header h1 {
   margin: 0;
@@ -78,6 +51,33 @@ body {
 
 .title-icon {
   font-size: 28px;
+}
+
+.nav-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.nav-bar a {
+  text-decoration: none;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.nav-bar a:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.nav-bar a.active {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 /* PAGE */
@@ -174,7 +174,7 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px 16px 14px 24px;
+  padding: 14px 28px 14px 24px;
   background: #fff;
   border-radius: 16px;
   position: relative;
@@ -197,14 +197,35 @@ body {
   );
 }
 
+/* CARD ID */
+.card-id {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  background: rgba(255,255,255,0.7);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.card-id:hover {
+  background: rgba(255,255,255,0.95);
+}
+
 /* COLUMNS */
 .top { flex: 1.4; }
+
 .keywords {
   flex: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
+
 .links {
   flex: 1.2;
   display: flex;
@@ -235,7 +256,6 @@ body {
   border: 1px solid #e5e7eb;
   cursor: pointer;
   background: #f1f5f9;
-  font-family: inherit;
 }
 
 .pill:nth-child(5n+1) { background: #ffe4e6; }
@@ -247,10 +267,6 @@ body {
 .language-pill {
   border-width: 2px;
   font-weight: 700;
-}
-
-.pill:hover {
-  transform: translateY(-1px);
 }
 
 /* STAR */
@@ -276,67 +292,117 @@ body {
   align-items: center;
 }
 
-/* MOBILE FIX */
+.report-link {
+  opacity: 0.7;
+}
+
+.report-link:hover {
+  opacity: 1;
+  background: #fee2e2;
+}
+
+/* INFO PAGES */
+.info-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.info-card {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 30px 28px 38px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.info-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: linear-gradient(
+    to bottom,
+    #ff6b6b,
+    #feca57,
+    #48dbfb,
+    #1dd1a1,
+    #5f27cd
+  );
+}
+
+.info-card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.info-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 30px;
+  color: #4876bb;
+}
+
+.info-subtitle {
+  margin-top: 20px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  color: #4876bb;
+}
+
+.info-card p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.info-card p + p {
+  margin-top: 8px;
+}
+
+.back-link {
+  font-size: 14px;
+  text-decoration: none;
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+/* MOBILE */
 @media (max-width: 768px) {
+
+  .header-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .app-header h1 {
     font-size: 24px;
-    padding: 10px 14px;
-    gap: 8px;
-    background: linear-gradient(
-      135deg,
-      rgba(72, 118, 187, 1),
-      rgba(72, 118, 187, 0.5),
-      rgba(72, 118, 187, 1)
-    );
+    justify-content: center;
   }
 
-  .title-icon {
-    font-size: 22px;
-  }
-
-  .page-wrap {
-    padding: 12px;
+  .nav-bar {
+    justify-content: center;
   }
 
   .control-row,
   .email-tools {
     flex-direction: column;
-    align-items: stretch;
   }
 
   #search,
   #emailAddress,
   #searchMode {
     width: 100%;
-    box-sizing: border-box;
     height: 34px;
-    min-height: 34px;
-    max-height: 34px;
-    padding: 0 10px;
-    font-size: 14px;
-    line-height: 1;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-
-  #emailFavoritesBtn,
-  .secondary-btn {
-    width: 100%;
-    box-sizing: border-box;
-    height: 36px;
-    min-height: 36px;
-    max-height: 36px;
-    padding: 0 10px;
     font-size: 14px;
   }
 
   .card {
     flex-direction: column;
-    gap: 16px;
   }
 
   .links {
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
