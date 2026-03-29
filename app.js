@@ -22,6 +22,8 @@ const emailFavoritesBtn = document.getElementById("emailFavoritesBtn");
 const copyFavoritesBtn = document.getElementById("copyFavoritesBtn");
 const clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
 const list = document.getElementById("list");
+const menuToggle = document.getElementById("menuToggle");
+const navBar = document.getElementById("navBar");
 
 // LOAD SAVED EMAIL
 loadSavedEmail();
@@ -50,18 +52,18 @@ fetch(SHEET_URL)
   });
 
 // EVENTS
-searchInput.addEventListener("input", filterAndRender);
-searchMode.addEventListener("change", filterAndRender);
-favoritesOnly.addEventListener("change", filterAndRender);
-favoritesFirst.addEventListener("change", filterAndRender);
-recentOnly.addEventListener("change", filterAndRender);
-recentFirst.addEventListener("change", filterAndRender);
+searchInput?.addEventListener("input", filterAndRender);
+searchMode?.addEventListener("change", filterAndRender);
+favoritesOnly?.addEventListener("change", filterAndRender);
+favoritesFirst?.addEventListener("change", filterAndRender);
+recentOnly?.addEventListener("change", filterAndRender);
+recentFirst?.addEventListener("change", filterAndRender);
 
-emailFavoritesBtn.addEventListener("click", emailFavorites);
-copyFavoritesBtn.addEventListener("click", copyFavorites);
-clearFavoritesBtn.addEventListener("click", clearFavorites);
+emailFavoritesBtn?.addEventListener("click", emailFavorites);
+copyFavoritesBtn?.addEventListener("click", copyFavorites);
+clearFavoritesBtn?.addEventListener("click", clearFavorites);
 
-emailAddress.addEventListener("input", () => {
+emailAddress?.addEventListener("input", () => {
   try {
     localStorage.setItem(EMAIL_KEY, emailAddress.value.trim());
   } catch (err) {
@@ -69,13 +71,20 @@ emailAddress.addEventListener("input", () => {
   }
 });
 
+if (menuToggle && navBar) {
+  menuToggle.addEventListener("click", () => {
+    const isOpen = navBar.classList.toggle("open");
+    menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+}
+
 function safeValue(value) {
   return (value || "").toString().toLowerCase().trim();
 }
 
 function normalizeItem(item, index) {
   const normalized = {
-    Id: (item.Id || "").toString().trim(),
+    ID: (item.ID || "").toString().trim(),
     Title: (item.Title || "").toString().trim(),
     Keywords: (item.Keywords || "").toString().trim(),
     Language: (item.Language || "").toString().trim(),
@@ -84,7 +93,7 @@ function normalizeItem(item, index) {
     Supplemental: (item.Supplemental || "").toString().trim()
   };
 
-  normalized._key = normalized.Id ? `id:${normalized.Id}` : `row:${index}`;
+  normalized._key = normalized.ID ? `id:${normalized.ID}` : `row:${index}`;
   return normalized;
 }
 
@@ -118,7 +127,7 @@ function saveFavorites() {
 function loadSavedEmail() {
   try {
     const saved = localStorage.getItem(EMAIL_KEY);
-    if (saved) {
+    if (saved && emailAddress) {
       emailAddress.value = saved;
     }
   } catch (err) {
@@ -166,12 +175,14 @@ function toggleFavorite(itemKey) {
 }
 
 function applyKeywordSearch(keyword) {
+  if (!searchMode || !searchInput) return;
   searchMode.value = "keywords";
   searchInput.value = keyword;
   filterAndRender();
 }
 
 function applyLanguageSearch(language) {
+  if (!searchMode || !searchInput) return;
   searchMode.value = "language";
   searchInput.value = language;
   filterAndRender();
@@ -214,6 +225,10 @@ function buildFavoritesText() {
       lines.push(metaParts.join(" • "));
     }
 
+    if (item.ID) {
+      lines.push(`ID: ${item.ID}`);
+    }
+
     if (item.Video) {
       lines.push(`Video: ${item.Video}`);
     }
@@ -229,6 +244,8 @@ function buildFavoritesText() {
 }
 
 function emailFavorites() {
+  if (!emailAddress) return;
+
   const to = (emailAddress.value || "").trim();
   const favoriteItems = getFavoriteItems();
 
@@ -264,6 +281,8 @@ function copyFavorites() {
 }
 
 function showCopyFeedback() {
+  if (!copyFavoritesBtn) return;
+
   const original = copyFavoritesBtn.textContent;
   copyFavoritesBtn.textContent = "Copied!";
   copyFavoritesBtn.disabled = true;
@@ -289,16 +308,18 @@ function copyID(id, element) {
     .catch(() => {
       alert("Copy failed. Please try again.");
     });
-}
+  }
 
 // FILTER + SORT
 function filterAndRender() {
-  const query = safeValue(searchInput.value);
-  const mode = searchMode.value;
-  const favOnly = favoritesOnly.checked;
-  const favFirst = favoritesFirst.checked;
-  const recOnly = recentOnly.checked;
-  const recFirst = recentFirst.checked;
+  if (!list) return;
+
+  const query = safeValue(searchInput?.value);
+  const mode = searchMode?.value || "all";
+  const favOnly = favoritesOnly?.checked || false;
+  const favFirst = favoritesFirst?.checked || false;
+  const recOnly = recentOnly?.checked || false;
+  const recFirst = recentFirst?.checked || false;
 
   let filtered = allData.filter((item) => {
     const itemKey = getItemKey(item);
@@ -356,6 +377,8 @@ function filterAndRender() {
 
 // RENDER
 function renderList(data) {
+  if (!list) return;
+
   list.innerHTML = "";
 
   if (!data.length) {
@@ -480,9 +503,11 @@ function renderList(data) {
       videoLink.target = "_blank";
       videoLink.rel = "noopener noreferrer";
       videoLink.textContent = "🎬 Video";
+
       videoLink.addEventListener("click", () => {
         markRecent(itemKey);
       });
+
       links.appendChild(videoLink);
     }
 
@@ -493,9 +518,11 @@ function renderList(data) {
       supplementalLink.target = "_blank";
       supplementalLink.rel = "noopener noreferrer";
       supplementalLink.textContent = "📎 Extra";
+
       supplementalLink.addEventListener("click", () => {
         markRecent(itemKey);
       });
+
       links.appendChild(supplementalLink);
     }
 

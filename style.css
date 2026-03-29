@@ -405,4 +405,125 @@ body {
   .links {
     justify-content: flex-start;
   }
+
+  *,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.page-wrap,
+.controls,
+#list,
+.control-row,
+.email-tools {
+  width: 100%;
+}
+
+#search,
+#searchMode,
+#emailAddress,
+#emailFavoritesBtn,
+.secondary-btn {
+  max-width: 100%;
+}
+
+.control-row > *,
+.email-tools > * {
+  min-width: 0;
+}
+
+.menu-toggle {
+  display: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+  font-size: 22px;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .app-header h1 {
+    font-size: 24px;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .menu-toggle {
+    display: block;
+    margin-left: auto;
+  }
+
+  .nav-bar {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .nav-bar.open {
+    display: flex;
+  }
+
+  .nav-bar a {
+    width: 100%;
+    text-align: center;
+  }
+
+  .control-row,
+  .email-tools {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  #search,
+  #searchMode,
+  #emailAddress,
+  #emailFavoritesBtn,
+  .secondary-btn {
+    width: 100%;
+    max-width: 100%;
+    display: block;
+  }
+
+  #search,
+  #searchMode,
+  #emailAddress {
+    height: 38px;
+    font-size: 14px;
+  }
+
+  #emailFavoritesBtn,
+  .secondary-btn {
+    min-height: 38px;
+    font-size: 14px;
+  }
+
+  .card {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .links {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
 }
