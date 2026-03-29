@@ -40,23 +40,20 @@ body {
   font-family: 'Nunito', sans-serif;
   font-weight: 800;
   font-size: 32px;
-  color: transparent; /* Makes the text color transparent so the background can show through */
-  background: white; /* Keeps the background white */
+  color: #000000;
   border: 5px solid transparent;
-  border-radius: 999px; /* Rounded edges for the title */
-  background-clip: padding-box; /* Ensures the white background clips to the border */
-  background-image: linear-gradient(
-    to right,
-    #ff6b6b,
-    #feca57,
-    #48dbfb,
-    #1dd1a1,
-    #5f27cd
-  ); /* Gradient for the text */
-  -webkit-background-clip: text; /* Clips the gradient to the text */
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(
+      90deg,
+      #ff6b6b,
+      #feca57,
+      #48dbfb,
+      #1dd1a1,
+      #5f27cd
+    ) border-box;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .title-icon {
@@ -471,15 +468,23 @@ body {
 .back-link {
   font-size: 14px;
   text-decoration: none;
-  background: #f8fafc;
+  background: none;
   color: #4876bb;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #d8deea;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
 
 .back-link:hover {
-  background: #e0f2fe;
+  background: none;
+  text-decoration: underline;
+}
+
+.back-link::before,
+.back-link::after {
+  content: none !important;
+  display: none !important;
 }
 
 /* MOBILE */
