@@ -84,7 +84,7 @@ function safeValue(value) {
 
 function normalizeItem(item, index) {
   const normalized = {
-    Id: (item.Id || "").toString().trim(),
+    ID: (item.ID || item.Id || item.id || "").toString().trim(),
     Title: (item.Title || "").toString().trim(),
     Keywords: (item.Keywords || "").toString().trim(),
     Language: (item.Language || "").toString().trim(),
