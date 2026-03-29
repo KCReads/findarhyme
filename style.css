@@ -20,7 +20,7 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 14px 16px;
-  text-align: center;
+  text-align: right;
   display: flex;
   align-items: center;
   justify-content: space-between;
