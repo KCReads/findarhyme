@@ -84,7 +84,7 @@ function normalizeItem(item, index) {
     Supplemental: (item.Supplemental || "").toString().trim()
   };
 
-  normalized._key = normalized.ID ? `id:${normalized.ID}` : `row:${index}`;
+  normalized._key = normalized.Id ? `id:${normalized.Id}` : `row:${index}`;
   return normalized;
 }
 
