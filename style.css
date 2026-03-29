@@ -36,31 +36,35 @@ body {
 
 .app-header h1 {
   margin: 0;
-  padding: 14px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 999px;
   font-family: 'Nunito', sans-serif;
   font-weight: 800;
   font-size: 32px;
-  color: transparent; /* Makes the text color transparent so the background can show through */
-  background: white; /* Keeps the background white */
-  border: 5px solid transparent;
-  border-radius: 999px; /* Rounded edges for the title */
-  background-clip: padding-box; /* Ensures the white background clips to the border */
-  background-image: linear-gradient(
-    to right,
-    #ff6b6b,
-    #feca57,
-    #48dbfb,
-    #1dd1a1,
-    #5f27cd
-  ); /* Gradient for the text */
-  -webkit-background-clip: text; /* Clips the gradient to the text */
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  line-height: 1.1;
+  color: #000000;
+  border: 4px solid transparent;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(
+      135deg,
+      #ff595e 0%,
+      #ff924c 18%,
+      #ffca3a 36%,
+      #8ac926 54%,
+      #1982c4 72%,
+      #6a4c93 100%
+    ) border-box;
+  box-shadow: 0 8px 20px rgba(106, 76, 147, 0.12);
 }
 
 .title-icon {
-  font-size: 28px;
+  font-size: 0.95em;
+  line-height: 1;
 }
 
 /* HAMBURGER */
@@ -584,4 +588,103 @@ body {
   .info-subtitle {
     font-size: 18px;
   }
+  .about-photo-right {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+
+  float: right;
+  margin: 0 0 12px 18px;
+
+  border-radius: 50%;
+
+  /* optional rainbow border */
+  border: 4px solid transparent;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(
+      135deg,
+      #ff595e,
+      #ff924c,
+      #ffca3a,
+      #8ac926,
+      #1982c4,
+      #6a4c93
+    ) border-box;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+.about-card::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+@media (max-width: 600px) {
+  .about-photo-right {
+    float: none;
+    display: block;
+    margin: 0 auto 16px;
+  }
+}
+.about-photo-right {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  float: right;
+  margin: 0 0 12px 18px;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(
+      135deg,
+      #ff595e,
+      #ff924c,
+      #ffca3a,
+      #8ac926,
+      #1982c4,
+      #6a4c93
+    ) border-box;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.about-card::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.plain-page::before,
+.plain-page::after,
+.plain-page .page-wrap::before,
+.plain-page .page-wrap::after,
+.plain-page main::before,
+.plain-page main::after,
+.plain-page .back-link::before,
+.plain-page .back-link::after {
+  content: none !important;
+  display: none !important;
+}
+
+@media (max-width: 600px) {
+  .about-photo-right {
+    float: none;
+    display: block;
+    margin: 0 auto 16px;
+  }
+}
+
+a.back-link {
+  all: unset;
+  cursor: pointer;
+  font-weight: 800;
+  color: #4b3f72;
+}
+
+a.back-link:hover {
+  text-decoration: underline;
+}
+
 }
