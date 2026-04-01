@@ -1,18 +1,26 @@
 const CSV_PATH = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ14cW0LzMG6hPjkdWry9d_X8P_Uag-M84cN00o317GK9CCJVuknQkgbTE-O60P54wU7Wd_Uxkuna2h/pub?gid=1251597746&single=true&output=csv";
 
 const CATEGORY_CONFIG = [
-  { key: "Early Literacy Skill", className: "early-literacy-pill", type: "keyword" },
-  { key: "Physical Skill", className: "physical-skill-pill", type: "keyword" },
-  { key: "Cognitive Skill", className: "cognitive-skill-pill", type: "keyword" },
-  { key: "Social Skill", className: "social-skill-pill", type: "keyword" },
-  { key: "Concept", className: "concept-pill", type: "keyword" },
-  { key: "Theme", className: "theme-pill", type: "keyword" },
-  { key: "Tune", className: "tune-pill", type: "keyword" },
-  { key: "Language", className: "language-pill", type: "language" },
-  { key: "Prop", className: "prop-pill", type: "keyword" },
-  { key: "Music Genre", className: "music-genre-pill", type: "keyword" },
-  { key: "Format", className: "format-pill", type: "keyword" },
-  { key: "Music Source", className: "music-source-pill", type: "keyword" }
+  { key: "Early_Literacy_Skill", className: "early-literacy-pill", type: "keyword", group: "Skills" },
+  { key: "Physical_Skill", className: "physical-pill", type: "keyword", group: "Skills" },
+  { key: "Cognitive_Skill", className: "cognitive-pill", type: "keyword", group: "Skills" },
+  { key: "Social_Emotional_Skill", className: "social-skill-pill", type: "keyword", group: "Skills" },
+  { key: "Concept", className: "concept-pill", type: "keyword", group: "Content" },
+  { key: "Theme", className: "theme-pill", type: "keyword", group: "Content" },
+  { key: "Tune", className: "tune-pill", type: "keyword", group: "Music" },
+  { key: "Language", className: "language-pill", type: "language", group: "Language" },
+  { key: "Prop", className: "prop-pill", type: "keyword", group: "Performance" },
+  { key: "Music_Genre", className: "music-genre-pill", type: "keyword", group: "Music" },
+  { key: "Format", className: "format-pill", type: "keyword", group: "Performance" },
+  { key: "Music_Source", className: "music-source-pill", type: "keyword", group: "Music" }
+];
+
+const CATEGORY_GROUPS = [
+  { label: "Skills", keys: ["Early_Literacy_Skill", "Physical_Skill", "Cognitive_Skill", "Social_Emotional_Skill"] },
+  { label: "Content", keys: ["Concept", "Theme"] },
+  { label: "Performance", keys: ["Format", "Prop"] },
+  { label: "Music", keys: ["Tune", "Music_Genre", "Music_Source"] },
+  { label: "Language", keys: ["Language"] }
 ];
 
 let allRows = [];
@@ -25,15 +33,15 @@ function saveFavorites() {
   localStorage.setItem("favorites", JSON.stringify([...favorites]));
 }
 
-function normalizeValue(value) {
+function normalize(value) {
   return String(value ?? "").trim();
 }
 
 function lower(value) {
-  return normalizeValue(value).toLowerCase();
+  return normalize(value).toLowerCase();
 }
 
-function splitMultiValue(value) {
+function splitValues(value) {
   return String(value ?? "")
     .split(/[|,;]+/)
     .map(v => v.trim())
@@ -45,49 +53,56 @@ function getField(row, names) {
     if (row[name] !== undefined && row[name] !== null && row[name] !== "") {
       return row[name];
     }
+
+    const underscored = name.replace(/ /g, "_");
+    if (row[underscored] !== undefined && row[underscored] !== null && row[underscored] !== "") {
+      return row[underscored];
+    }
+
+    const spaced = name.replace(/_/g, " ");
+    if (row[spaced] !== undefined && row[spaced] !== null && row[spaced] !== "") {
+      return row[spaced];
+    }
   }
   return "";
 }
 
-function getTitleText(row) {
-  return getField(row, ["Title", "title"]);
-}
-
-function getCreatorText(row) {
-  return getField(row, ["Creator", "creator"]);
-}
-
-function getVideoLink(row) {
-  return getField(row, ["Video Link", "video link", "Link", "URL", "Url"]);
-}
-
 function getRowId(row, index = 0) {
-  const explicitId = getField(row, ["Id", "ID", "id"]);
-  if (explicitId) return String(explicitId).trim();
+  return (
+    getField(row, ["Id", "ID", "id"]) ||
+    `${getField(row, ["Title"])}_${index}`
+  );
+}
 
-  const title = normalizeValue(getTitleText(row));
-  const creator = normalizeValue(getCreatorText(row));
-  return `${title}__${creator}__${index}`;
+function getTitle(row) {
+  return getField(row, ["Title"]);
+}
+
+function getCreator(row) {
+  return getField(row, ["Creator"]);
+}
+
+function getLink(row) {
+  return getField(row, ["Video_Link", "Video Link", "Link", "URL", "Url"]);
 }
 
 function isTruthyFlag(value) {
-  const v = lower(value);
-  return ["yes", "true", "1", "y"].includes(v);
+  return ["yes", "true", "1", "y"].includes(lower(value));
 }
 
 function isAISupported(row) {
-  return isTruthyFlag(getField(row, ["AI-Supported", "AI Supported", "AISupported"]));
+  return isTruthyFlag(getField(row, ["AI_Supported", "AI Supported"]));
 }
 
-function hasProblematicHistory(row) {
-  return isTruthyFlag(getField(row, ["Problematic History", "ProblematicHistory"]));
+function hasProblematic(row) {
+  return isTruthyFlag(getField(row, ["Problematic_History", "Problematic History"]));
 }
 
 function isRecent(row) {
-  const recentFlag = getField(row, ["Recent", "Is Recent", "New"]);
+  const recentFlag = getField(row, ["Recent", "Is_Recent", "Is Recent", "New"]);
   if (isTruthyFlag(recentFlag)) return true;
 
-  const dateValue = getField(row, ["Date Added", "Added", "Date"]);
+  const dateValue = getField(row, ["Date_Added", "Date Added", "Added", "Date"]);
   if (!dateValue) return false;
 
   const parsed = new Date(dateValue);
@@ -98,28 +113,28 @@ function isRecent(row) {
   return diffDays <= 60;
 }
 
-function getAllKeywordValues(row) {
+function getKeywordValuesByRow(row) {
   const values = [];
 
   CATEGORY_CONFIG.forEach(category => {
     if (category.type === "keyword") {
-      values.push(...splitMultiValue(getField(row, [category.key])));
+      values.push(...splitValues(getField(row, [category.key])));
     }
   });
 
   return values;
 }
 
-function getAllLanguageValues(row) {
-  return splitMultiValue(getField(row, ["Language"]));
+function getLanguageValuesByRow(row) {
+  return splitValues(getField(row, ["Language"]));
 }
 
-function getAllKeywordSearchText(row) {
-  return getAllKeywordValues(row).join(" ").toLowerCase();
+function getKeywordSearchText(row) {
+  return getKeywordValuesByRow(row).join(" ").toLowerCase();
 }
 
-function getAllLanguageSearchText(row) {
-  return getAllLanguageValues(row).join(" ").toLowerCase();
+function getLanguageSearchText(row) {
+  return getLanguageValuesByRow(row).join(" ").toLowerCase();
 }
 
 function buildPill(text, className) {
@@ -130,12 +145,22 @@ function buildPill(text, className) {
   return btn;
 }
 
+function setSearchFromToggle(value, mode) {
+  const searchInput = document.getElementById("search");
+  const searchMode = document.getElementById("searchMode");
+
+  if (searchInput) searchInput.value = value || "";
+  if (searchMode) searchMode.value = mode || "all";
+}
+
 function toggleKeyword(value) {
   if (activeKeyword === value) {
     activeKeyword = "";
+    setSearchFromToggle("", "all");
   } else {
     activeKeyword = value;
     activeLanguage = "";
+    setSearchFromToggle(value, "keywords");
   }
   renderList();
 }
@@ -143,9 +168,11 @@ function toggleKeyword(value) {
 function toggleLanguage(value) {
   if (activeLanguage === value) {
     activeLanguage = "";
+    setSearchFromToggle("", "all");
   } else {
     activeLanguage = value;
     activeKeyword = "";
+    setSearchFromToggle(value, "language");
   }
   renderList();
 }
@@ -176,10 +203,12 @@ function getFilteredRows() {
 
   return allRows.filter((row, index) => {
     const rowId = getRowId(row, index);
-    const title = lower(getTitleText(row));
-    const creator = lower(getCreatorText(row));
-    const keywordsText = getAllKeywordSearchText(row);
-    const languageText = getAllLanguageSearchText(row);
+    const title = lower(getTitle(row));
+    const creator = lower(getCreator(row));
+    const keywordValues = getKeywordValuesByRow(row);
+    const languageValues = getLanguageValuesByRow(row);
+    const keywordsText = getKeywordSearchText(row);
+    const languageText = getLanguageSearchText(row);
 
     let matchesSearch = true;
 
@@ -201,16 +230,13 @@ function getFilteredRows() {
       }
     }
 
-    const rowKeywords = getAllKeywordValues(row);
-    const rowLanguages = getAllLanguageValues(row);
-
     const matchesKeywordToggle =
       !activeKeyword ||
-      rowKeywords.some(value => value.toLowerCase() === activeKeyword.toLowerCase());
+      keywordValues.some(value => lower(value) === lower(activeKeyword));
 
     const matchesLanguageToggle =
       !activeLanguage ||
-      rowLanguages.some(value => value.toLowerCase() === activeLanguage.toLowerCase());
+      languageValues.some(value => lower(value) === lower(activeLanguage));
 
     return (
       matchesSearch &&
@@ -219,7 +245,7 @@ function getFilteredRows() {
       (!favoritesOnly || favorites.has(rowId)) &&
       (!recentOnly || isRecent(row)) &&
       (!excludeAI || !isAISupported(row)) &&
-      (!excludeProblematic || !hasProblematicHistory(row))
+      (!excludeProblematic || !hasProblematic(row))
     );
   });
 }
@@ -244,8 +270,65 @@ function sortRows(rows) {
       if (aRecent !== bRecent) return bRecent - aRecent;
     }
 
-    return getTitleText(a).localeCompare(getTitleText(b));
+    return getTitle(a).localeCompare(getTitle(b));
   });
+}
+
+function buildGroupedKeywords(row) {
+  const kw = document.createElement("div");
+  kw.className = "keywords";
+
+  CATEGORY_GROUPS.forEach(group => {
+    const groupWrap = document.createElement("div");
+    groupWrap.className = "keyword-group";
+
+    const label = document.createElement("div");
+    label.className = "keyword-group-label";
+    label.textContent = group.label;
+
+    const pillRow = document.createElement("div");
+    pillRow.className = "keyword-group-pills";
+
+    group.keys.forEach(key => {
+      const config = CATEGORY_CONFIG.find(c => c.key === key);
+      if (!config) return;
+
+      const values = splitValues(getField(row, [key]));
+      if (!values.length) return;
+
+      values.forEach(value => {
+        const trimmed = value.trim();
+        if (!trimmed) return;
+
+        const pill = buildPill(trimmed, config.className);
+
+        if (
+          (config.type === "language" && trimmed === activeLanguage) ||
+          (config.type === "keyword" && trimmed === activeKeyword)
+        ) {
+          pill.classList.add("active-pill");
+        }
+
+        pill.addEventListener("click", () => {
+          if (config.type === "language") {
+            toggleLanguage(trimmed);
+          } else {
+            toggleKeyword(trimmed);
+          }
+        });
+
+        pillRow.appendChild(pill);
+      });
+    });
+
+    if (pillRow.children.length) {
+      groupWrap.appendChild(label);
+      groupWrap.appendChild(pillRow);
+      kw.appendChild(groupWrap);
+    }
+  });
+
+  return kw;
 }
 
 function renderList() {
@@ -254,28 +337,22 @@ function renderList() {
 
   list.innerHTML = "";
 
-  const filtered = sortRows(getFilteredRows());
+  const rows = sortRows(getFilteredRows());
 
-  if (!filtered.length) {
-    const empty = document.createElement("div");
-    empty.className = "load-error";
-    empty.textContent = "No results found.";
-    list.appendChild(empty);
+  if (!rows.length) {
+    list.innerHTML = `<div class="load-error">No results found.</div>`;
     return;
   }
 
-  filtered.forEach((row, index) => {
-    const rowId = getRowId(row, index);
-    const title = getTitleText(row);
-    const creator = getCreatorText(row);
-    const videoLink = getVideoLink(row);
+  rows.forEach((row, i) => {
+    const id = getRowId(row, i);
 
-    const card = document.createElement("article");
+    const card = document.createElement("div");
     card.className = "card";
 
     const idBadge = document.createElement("div");
     idBadge.className = "card-id";
-    idBadge.textContent = `Id: ${rowId}`;
+    idBadge.textContent = `Id: ${id}`;
 
     const top = document.createElement("div");
     top.className = "top";
@@ -285,14 +362,14 @@ function renderList() {
 
     const star = document.createElement("button");
     star.type = "button";
-    star.className = `star ${favorites.has(rowId) ? "fav" : ""}`;
-    star.setAttribute("aria-label", favorites.has(rowId) ? "Remove favorite" : "Add favorite");
+    star.className = `star ${favorites.has(id) ? "fav" : ""}`;
     star.textContent = "★";
+    star.setAttribute("aria-label", favorites.has(id) ? "Remove favorite" : "Add favorite");
     star.addEventListener("click", () => {
-      if (favorites.has(rowId)) {
-        favorites.delete(rowId);
+      if (favorites.has(id)) {
+        favorites.delete(id);
       } else {
-        favorites.add(rowId);
+        favorites.add(id);
       }
       saveFavorites();
       renderList();
@@ -301,79 +378,56 @@ function renderList() {
     const textBlock = document.createElement("div");
     textBlock.className = "text-block";
 
-    const titleDiv = document.createElement("div");
-    titleDiv.className = "title";
-    titleDiv.textContent = title || "Untitled";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = getTitle(row) || "Untitled";
 
     const meta = document.createElement("div");
     meta.className = "meta";
 
-    const creatorDiv = document.createElement("div");
-    creatorDiv.className = "creator";
-    creatorDiv.textContent = creator ? `Creator: ${creator}` : "";
+    const creator = document.createElement("div");
+    creator.className = "creator";
+    creator.textContent = getCreator(row) ? `Creator: ${getCreator(row)}` : "";
 
-    meta.appendChild(creatorDiv);
-    textBlock.appendChild(titleDiv);
+    meta.appendChild(creator);
+    textBlock.appendChild(title);
     textBlock.appendChild(meta);
 
     topMain.appendChild(star);
     topMain.appendChild(textBlock);
     top.appendChild(topMain);
 
-    const keywordsCol = document.createElement("div");
-    keywordsCol.className = "keywords";
-
-    CATEGORY_CONFIG.forEach(category => {
-      const values = splitMultiValue(getField(row, [category.key]));
-      if (!values.length) return;
-
-      if (category.type === "language") {
-        addPillsFromColumn(
-          keywordsCol,
-          values,
-          category.className,
-          activeLanguage,
-          toggleLanguage
-        );
-      } else {
-        addPillsFromColumn(
-          keywordsCol,
-          values,
-          category.className,
-          activeKeyword,
-          toggleKeyword
-        );
-      }
-    });
+    const kw = buildGroupedKeywords(row);
 
     const links = document.createElement("div");
     links.className = "links";
 
-    if (videoLink) {
-      const link = document.createElement("a");
-      link.className = "icon-link";
-      link.href = videoLink;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = "Open Link";
-      links.appendChild(link);
+    const link = getLink(row);
+    if (link) {
+      const a = document.createElement("a");
+      a.href = link;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "icon-link";
+      a.textContent = "Open Link";
+      links.appendChild(a);
     }
 
     const statusFlags = document.createElement("div");
     statusFlags.className = "status-flags";
 
     if (isAISupported(row)) {
-      const aiFlag = document.createElement("div");
-      aiFlag.className = "status-flag ai-flag";
-      aiFlag.textContent = "AI-Supported";
-      statusFlags.appendChild(aiFlag);
+      const f = document.createElement("div");
+      f.className = "status-flag ai-flag";
+      f.textContent = "AI-Supported";
+      statusFlags.appendChild(f);
     }
 
-    if (hasProblematicHistory(row)) {
-      const warningFlag = document.createElement("div");
-      warningFlag.className = "status-flag warning-flag";
-      warningFlag.textContent = "Problematic History";
-      statusFlags.appendChild(warningFlag);
+    if (hasProblematic(row)) {
+      const f = document.createElement("div");
+      f.className = "status-flag warning-flag";
+      f.textContent = "Problematic History";
+      statusFlags.appendChild(f);
     }
 
     if (statusFlags.children.length) {
@@ -382,30 +436,28 @@ function renderList() {
 
     card.appendChild(idBadge);
     card.appendChild(top);
-    card.appendChild(keywordsCol);
+    card.appendChild(kw);
     card.appendChild(links);
 
     list.appendChild(card);
   });
 }
 
-function resetAllFilters() {
-  const idsToClear = [
-    "favoritesOnly",
-    "favoritesFirst",
-    "recentOnly",
-    "recentFirst",
-    "excludeAI",
-    "excludeProblematic"
-  ];
-
+function resetAll() {
   const search = document.getElementById("search");
   const searchMode = document.getElementById("searchMode");
 
   if (search) search.value = "";
   if (searchMode) searchMode.value = "all";
 
-  idsToClear.forEach(id => {
+  [
+    "favoritesOnly",
+    "favoritesFirst",
+    "recentOnly",
+    "recentFirst",
+    "excludeAI",
+    "excludeProblematic"
+  ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.checked = false;
   });
@@ -424,31 +476,39 @@ function buildFavoritesEmailText() {
   }
 
   return favoriteRows.map((row, index) => {
-    const title = getTitleText(row) || "Untitled";
-    const creator = getCreatorText(row) || "Unknown creator";
-    const link = getVideoLink(row) || "";
+    const title = getTitle(row) || "Untitled";
+    const creator = getCreator(row) || "Unknown creator";
+    const link = getLink(row) || "";
     return `${index + 1}. ${title} — ${creator}${link ? `\n${link}` : ""}`;
   }).join("\n\n");
 }
 
-function setupControls() {
-  const menuToggle = document.getElementById("menuToggle");
-  const navBar = document.getElementById("navBar");
-
-  if (menuToggle && navBar) {
-    menuToggle.addEventListener("click", () => {
-      const isOpen = navBar.classList.toggle("open");
-      menuToggle.setAttribute("aria-expanded", String(isOpen));
-    });
-  }
-
+function setup() {
   const search = document.getElementById("search");
   const searchMode = document.getElementById("searchMode");
   const resetSearchBtn = document.getElementById("resetSearchBtn");
+  const menuToggle = document.getElementById("menuToggle");
+  const navBar = document.getElementById("navBar");
 
-  if (search) search.addEventListener("input", renderList);
-  if (searchMode) searchMode.addEventListener("change", renderList);
-  if (resetSearchBtn) resetSearchBtn.addEventListener("click", resetAllFilters);
+  if (search) {
+    search.addEventListener("input", () => {
+      activeKeyword = "";
+      activeLanguage = "";
+      renderList();
+    });
+  }
+
+  if (searchMode) {
+    searchMode.addEventListener("change", () => {
+      activeKeyword = "";
+      activeLanguage = "";
+      renderList();
+    });
+  }
+
+  if (resetSearchBtn) {
+    resetSearchBtn.addEventListener("click", resetAll);
+  }
 
   [
     "favoritesOnly",
@@ -461,6 +521,13 @@ function setupControls() {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", renderList);
   });
+
+  if (menuToggle && navBar) {
+    menuToggle.addEventListener("click", () => {
+      const isOpen = navBar.classList.toggle("open");
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+  }
 
   const copyFavoritesBtn = document.getElementById("copyFavoritesBtn");
   if (copyFavoritesBtn) {
@@ -513,17 +580,17 @@ function loadCSV() {
     download: true,
     header: true,
     skipEmptyLines: true,
-    complete: (results) => {
-      allRows = results.data || [];
+    complete: (res) => {
+      allRows = res.data || [];
       renderList();
     },
     error: () => {
-      list.innerHTML = '<div class="load-error">Could not load the database.</div>';
+      list.innerHTML = `<div class="load-error">Could not load the database.</div>`;
     }
   });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  setupControls();
+  setup();
   loadCSV();
 });
