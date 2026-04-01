@@ -1,485 +1,280 @@
-let allData = [];
+const CSV_PATH = "songs.csv";
 
-const FAVORITES_KEY = "find-my-rhyme-favorites";
-const EMAIL_KEY = "find-my-rhyme-email";
-const RECENT_KEY = "find-my-rhyme-recent";
+const CATEGORY_CONFIG = [
+  { key: "Early Literacy Skill", className: "early-literacy-pill", type: "keyword" },
+  { key: "Developmental Skill", className: "developmental-pill", type: "keyword" },
+  { key: "Social Skill", className: "social-skill-pill", type: "keyword" },
+  { key: "Theme", className: "theme-pill", type: "keyword" },
+  { key: "Tune", className: "tune-pill", type: "keyword" },
+  { key: "Language", className: "language-pill", type: "language" },
+  { key: "Prop", className: "prop-pill", type: "keyword" },
+  { key: "Music Genre", className: "music-genre-pill", type: "keyword" },
+  { key: "Song Type", className: "song-type-pill", type: "keyword" },
+  { key: "Recorded Music", className: "recorded-music-pill", type: "keyword" }
+];
 
-let favorites = loadFavorites();
-let recent = loadRecent();
+let allRows = [];
+let activeKeyword = "";
+let activeLanguage = "";
 
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ14cW0LzMG6hPjkdWry9d_X8P_Uag-M84cN00o317GK9CCJVuknQkgbTE-O60P54wU7Wd_Uxkuna2h/pub?gid=1251597746&single=true&output=csv";
-
-// DOM
-const searchInput = document.getElementById("search");
-const searchMode = document.getElementById("searchMode");
-const favoritesOnly = document.getElementById("favoritesOnly");
-const favoritesFirst = document.getElementById("favoritesFirst");
-const recentOnly = document.getElementById("recentOnly");
-const recentFirst = document.getElementById("recentFirst");
-const excludeAI = document.getElementById("excludeAI");
-const excludeProblematic = document.getElementById("excludeProblematic");
-const emailAddress = document.getElementById("emailAddress");
-const emailFavoritesBtn = document.getElementById("emailFavoritesBtn");
-const copyFavoritesBtn = document.getElementById("copyFavoritesBtn");
-const clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
-const list = document.getElementById("list");
-const menuToggle = document.getElementById("menuToggle");
-const navBar = document.getElementById("navBar");
-
-// LOAD SAVED EMAIL
-loadSavedEmail();
-
-// LOAD CSV
-fetch(SHEET_URL)
-  .then((res) => {
-    if (!res.ok) {
-      throw new Error(`HTTP error ${res.status}`);
-    }
-    return res.text();
-  })
-  .then((csv) => {
-    const parsed = Papa.parse(csv, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header) => header.trim()
-    });
-
-    allData = parsed.data.map((item, index) => normalizeItem(item, index));
-    filterAndRender();
-  })
-  .catch((err) => {
-    console.error("Failed to load CSV:", err);
-    list.innerHTML = `<div class="load-error">Could not load data.</div>`;
-  });
-
-// EVENTS
-searchInput?.addEventListener("input", filterAndRender);
-searchMode?.addEventListener("change", filterAndRender);
-favoritesOnly?.addEventListener("change", filterAndRender);
-favoritesFirst?.addEventListener("change", filterAndRender);
-recentOnly?.addEventListener("change", filterAndRender);
-recentFirst?.addEventListener("change", filterAndRender);
-excludeAI?.addEventListener("change", filterAndRender);
-excludeProblematic?.addEventListener("change", filterAndRender);
-
-emailFavoritesBtn?.addEventListener("click", emailFavorites);
-copyFavoritesBtn?.addEventListener("click", copyFavorites);
-clearFavoritesBtn?.addEventListener("click", clearFavorites);
-
-emailAddress?.addEventListener("input", () => {
-  try {
-    localStorage.setItem(EMAIL_KEY, emailAddress.value.trim());
-  } catch (err) {
-    console.error("Failed to save email:", err);
-  }
-});
-
-if (menuToggle && navBar) {
-  menuToggle.addEventListener("click", () => {
-    const isOpen = navBar.classList.toggle("open");
-    menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
-}
-
-function safeValue(value) {
-  return (value || "").toString().toLowerCase().trim();
-}
-
-function normalizeItem(item, index) {
-  const normalized = {
-    ID: (item.ID || item.Id || item.id || "").toString().trim(),
-    Title: (item.Title || "").toString().trim(),
-    Early_Literacy_Skill: (item.Early_Literacy_Skill || "").toString().trim(),
-    Physical_Skill: (item.Physical_Skill || "").toString().trim(),
-    Cognitive_Skill: (item.Cognitive_Skill || "").toString().trim(),
-    Social_Emotional_Skill: (item.Social_Emotional_Skill || "").toString().trim(),
-    Concept: (item.Concept || "").toString().trim(),
-    Theme: (item.Theme || "").toString().trim(),
-    Tune: (item.Tune || "").toString().trim(),
-    Language: (item.Language || "").toString().trim(),
-    Prop: (item.Prop || item.Props || "").toString().trim(),
-    Music_Genre: (item.Music_Genre || item["Music Genre"] || "").toString().trim(),
-    Format: (item.Format || "").toString().trim(),
-    Music_Source: (item.Music_Source || item["Music Source"] || "").toString().trim(),
-    AI_Supported: (item.AI_Supported || item["AI-Supported"] || "").toString().trim(),
-    Problematic_History: (
-      item.Problematic_History ||
-      item["Problematic_History"] ||
-      item["Problematic History"] ||
-      ""
-    ).toString().trim(),
-    Creator: (item.Creator || "").toString().trim(),
-    Video: (item.Video || "").toString().trim(),
-    Supplemental: (item.Supplemental || "").toString().trim()
-  };
-
-  normalized._key = normalized.ID ? `id:${normalized.ID}` : `row:${index}`;
-
-  normalized._keywordSearch = [
-    normalized.Early_Literacy_Skill,
-    normalized.Physical_Skill,
-    normalized.Cognitive_Skill,
-    normalized.Social_Emotional_Skill,
-    normalized.Concept,
-    normalized.Theme,
-    normalized.Tune,
-    normalized.Language,
-    normalized.Prop,
-    normalized.Music_Genre,
-    normalized.Format,
-    normalized.Music_Source,
-    normalized.AI_Supported,
-    normalized.Problematic_History
-  ]
-    .filter(Boolean)
-    .join(" | ");
-
-  return normalized;
-}
-
-function getItemKey(item) {
-  return item._key;
-}
-
-function loadFavorites() {
-  try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
-    if (!raw) return new Set();
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set();
-
-    return new Set(parsed.map(String));
-  } catch (err) {
-    console.error("Failed to load favorites:", err);
-    return new Set();
-  }
-}
+const favorites = new Set(JSON.parse(localStorage.getItem("favorites") || "[]"));
 
 function saveFavorites() {
-  try {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites]));
-  } catch (err) {
-    console.error("Failed to save favorites:", err);
-  }
+  localStorage.setItem("favorites", JSON.stringify([...favorites]));
 }
 
-function loadSavedEmail() {
-  try {
-    const saved = localStorage.getItem(EMAIL_KEY);
-    if (saved && emailAddress) {
-      emailAddress.value = saved;
-    }
-  } catch (err) {
-    console.error("Failed to load saved email:", err);
-  }
+function normalizeValue(value) {
+  return String(value ?? "").trim();
 }
 
-function loadRecent() {
-  try {
-    const raw = localStorage.getItem(RECENT_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.map(String) : [];
-  } catch (err) {
-    console.error("Failed to load recent items:", err);
-    return [];
-  }
+function lower(value) {
+  return normalizeValue(value).toLowerCase();
 }
 
-function saveRecent() {
-  try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
-  } catch (err) {
-    console.error("Failed to save recent items:", err);
-  }
-}
-
-function markRecent(itemKey) {
-  recent = recent.filter((x) => x !== itemKey);
-  recent.unshift(itemKey);
-  recent = recent.slice(0, 50);
-  saveRecent();
-}
-
-function toggleFavorite(itemKey) {
-  if (favorites.has(itemKey)) {
-    favorites.delete(itemKey);
-  } else {
-    favorites.add(itemKey);
-  }
-
-  markRecent(itemKey);
-  saveFavorites();
-  filterAndRender();
-}
-
-function applyKeywordSearch(keyword) {
-  if (!searchMode || !searchInput) return;
-  searchMode.value = "keywords";
-  searchInput.value = keyword;
-  filterAndRender();
-}
-
-function applyLanguageSearch(language) {
-  if (!searchMode || !searchInput) return;
-  searchMode.value = "language";
-  searchInput.value = language;
-  filterAndRender();
-}
-
-function clearFavorites() {
-  if (favorites.size === 0) {
-    alert("You don’t have any favorites yet.");
-    return;
-  }
-
-  const confirmed = confirm("Clear all favorites?");
-  if (!confirmed) return;
-
-  favorites.clear();
-  saveFavorites();
-  filterAndRender();
-}
-
-function getFavoriteItems() {
-  return allData.filter((item) => favorites.has(getItemKey(item)));
-}
-
-function buildFavoritesText() {
-  const favoriteItems = getFavoriteItems();
-
-  const lines = [
-    "My Find a Rhyme Favorites:",
-    ""
-  ];
-
-  favoriteItems.forEach((item, index) => {
-    lines.push(`${index + 1}. ${item.Title || ""}`);
-
-    const metaParts = [];
-    if (item.Creator) metaParts.push(item.Creator);
-    if (item.Language) metaParts.push(item.Language);
-
-    if (metaParts.length) {
-      lines.push(metaParts.join(" • "));
-    }
-
-    if (item.ID) {
-      lines.push(`ID: ${item.ID}`);
-    }
-
-    if (item.Video) {
-      lines.push(`Video: ${item.Video}`);
-    }
-
-    if (item.Supplemental) {
-      lines.push(`Extra: ${item.Supplemental}`);
-    }
-
-    lines.push("");
-  });
-
-  return lines.join("\n");
-}
-
-function emailFavorites() {
-  if (!emailAddress) return;
-
-  const to = (emailAddress.value || "").trim();
-  const favoriteItems = getFavoriteItems();
-
-  if (favoriteItems.length === 0) {
-    alert("You have no favorites selected yet.");
-    return;
-  }
-
-  const subject = "My Find a Rhyme Favorites";
-  const body = buildFavoritesText();
-
-  const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.location.href = mailto;
-}
-
-function copyFavorites() {
-  const favoriteItems = getFavoriteItems();
-
-  if (favoriteItems.length === 0) {
-    alert("You have no favorites to copy yet.");
-    return;
-  }
-
-  const text = buildFavoritesText();
-
-  navigator.clipboard.writeText(text)
-    .then(() => {
-      showCopyFeedback();
-    })
-    .catch(() => {
-      alert("Copy failed. Please try again.");
-    });
-}
-
-function showCopyFeedback() {
-  if (!copyFavoritesBtn) return;
-
-  const original = copyFavoritesBtn.textContent;
-  copyFavoritesBtn.textContent = "Copied!";
-  copyFavoritesBtn.disabled = true;
-
-  setTimeout(() => {
-    copyFavoritesBtn.textContent = original;
-    copyFavoritesBtn.disabled = false;
-  }, 1500);
-}
-
-function copyID(id, element) {
-  navigator.clipboard.writeText(id)
-    .then(() => {
-      const original = element.textContent;
-      element.textContent = "Copied!";
-      element.disabled = true;
-
-      setTimeout(() => {
-        element.textContent = `ID: ${id}`;
-        element.disabled = false;
-      }, 1200);
-    })
-    .catch(() => {
-      alert("Copy failed. Please try again.");
-    });
-}
-
-function splitValues(value) {
-  return (value || "")
-    .split(",")
-    .map((v) => v.trim())
+function splitMultiValue(value) {
+  return String(value ?? "")
+    .split(/[|,;]+/)
+    .map(v => v.trim())
     .filter(Boolean);
 }
 
-function addPills(container, value, className, clickHandler, labelPrefix = "Search keyword") {
-  splitValues(value).forEach((text) => {
-    const pill = document.createElement("button");
-    pill.className = `pill ${className}`;
-    pill.type = "button";
-    pill.textContent = text;
-    pill.setAttribute("aria-label", `${labelPrefix} ${text}`);
+function getField(row, names) {
+  for (const name of names) {
+    if (row[name] !== undefined && row[name] !== null && row[name] !== "") {
+      return row[name];
+    }
+  }
+  return "";
+}
 
-    pill.addEventListener("click", () => {
-      clickHandler(text);
-    });
+function getTitleText(row) {
+  return getField(row, ["Title", "title"]);
+}
 
+function getCreatorText(row) {
+  return getField(row, ["Creator", "creator"]);
+}
+
+function getVideoLink(row) {
+  return getField(row, ["Video Link", "video link", "Link", "URL", "Url"]);
+}
+
+function getRowId(row, index = 0) {
+  const explicitId = getField(row, ["Id", "ID", "id"]);
+  if (explicitId) return String(explicitId).trim();
+
+  const title = normalizeValue(getTitleText(row));
+  const creator = normalizeValue(getCreatorText(row));
+  return `${title}__${creator}__${index}`;
+}
+
+function isTruthyFlag(value) {
+  const v = lower(value);
+  return ["yes", "true", "1", "y"].includes(v);
+}
+
+function isAISupported(row) {
+  return isTruthyFlag(getField(row, ["AI-Supported", "AI Supported", "AISupported"]));
+}
+
+function hasProblematicHistory(row) {
+  return isTruthyFlag(getField(row, ["Problematic History", "ProblematicHistory"]));
+}
+
+function isRecent(row) {
+  const recentFlag = getField(row, ["Recent", "Is Recent", "New"]);
+  if (isTruthyFlag(recentFlag)) return true;
+
+  const dateValue = getField(row, ["Date Added", "Added", "Date"]);
+  if (!dateValue) return false;
+
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return false;
+
+  const now = new Date();
+  const diffDays = (now - parsed) / (1000 * 60 * 60 * 24);
+  return diffDays <= 60;
+}
+
+function getAllKeywordValues(row) {
+  const values = [];
+
+  CATEGORY_CONFIG.forEach(category => {
+    if (category.type === "keyword") {
+      values.push(...splitMultiValue(getField(row, [category.key])));
+    }
+  });
+
+  return values;
+}
+
+function getAllLanguageValues(row) {
+  return splitMultiValue(getField(row, ["Language"]));
+}
+
+function getAllKeywordSearchText(row) {
+  return getAllKeywordValues(row).join(" ").toLowerCase();
+}
+
+function getAllLanguageSearchText(row) {
+  return getAllLanguageValues(row).join(" ").toLowerCase();
+}
+
+function buildPill(text, className) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = `pill ${className}`.trim();
+  btn.textContent = text;
+  return btn;
+}
+
+function toggleKeyword(value) {
+  if (activeKeyword === value) {
+    activeKeyword = "";
+  } else {
+    activeKeyword = value;
+    activeLanguage = "";
+  }
+  renderList();
+}
+
+function toggleLanguage(value) {
+  if (activeLanguage === value) {
+    activeLanguage = "";
+  } else {
+    activeLanguage = value;
+    activeKeyword = "";
+  }
+  renderList();
+}
+
+function addPillsFromColumn(container, values, className, activeValue, toggleFn) {
+  values.forEach(value => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    const pill = buildPill(trimmed, className);
+
+    if (trimmed === activeValue) {
+      pill.classList.add("active-pill");
+    }
+
+    pill.addEventListener("click", () => toggleFn(trimmed));
     container.appendChild(pill);
   });
 }
 
-function hasTruthyFlag(value) {
-  const normalized = safeValue(value);
-  return normalized !== "" && normalized !== "no" && normalized !== "false" && normalized !== "0";
+function getFilteredRows() {
+  const searchText = lower(document.getElementById("search")?.value || "");
+  const searchMode = document.getElementById("searchMode")?.value || "all";
+  const favoritesOnly = !!document.getElementById("favoritesOnly")?.checked;
+  const recentOnly = !!document.getElementById("recentOnly")?.checked;
+  const excludeAI = !!document.getElementById("excludeAI")?.checked;
+  const excludeProblematic = !!document.getElementById("excludeProblematic")?.checked;
+
+  return allRows.filter((row, index) => {
+    const rowId = getRowId(row, index);
+    const title = lower(getTitleText(row));
+    const creator = lower(getCreatorText(row));
+    const keywordsText = getAllKeywordSearchText(row);
+    const languageText = getAllLanguageSearchText(row);
+
+    let matchesSearch = true;
+
+    if (searchText) {
+      if (searchMode === "title") {
+        matchesSearch = title.includes(searchText);
+      } else if (searchMode === "creator") {
+        matchesSearch = creator.includes(searchText);
+      } else if (searchMode === "keywords") {
+        matchesSearch = keywordsText.includes(searchText);
+      } else if (searchMode === "language") {
+        matchesSearch = languageText.includes(searchText);
+      } else {
+        matchesSearch =
+          title.includes(searchText) ||
+          creator.includes(searchText) ||
+          keywordsText.includes(searchText) ||
+          languageText.includes(searchText);
+      }
+    }
+
+    const rowKeywords = getAllKeywordValues(row);
+    const rowLanguages = getAllLanguageValues(row);
+
+    const matchesKeywordToggle =
+      !activeKeyword ||
+      rowKeywords.some(value => value.toLowerCase() === activeKeyword.toLowerCase());
+
+    const matchesLanguageToggle =
+      !activeLanguage ||
+      rowLanguages.some(value => value.toLowerCase() === activeLanguage.toLowerCase());
+
+    return (
+      matchesSearch &&
+      matchesKeywordToggle &&
+      matchesLanguageToggle &&
+      (!favoritesOnly || favorites.has(rowId)) &&
+      (!recentOnly || isRecent(row)) &&
+      (!excludeAI || !isAISupported(row)) &&
+      (!excludeProblematic || !hasProblematicHistory(row))
+    );
+  });
 }
 
-// FILTER + SORT
-function filterAndRender() {
-  if (!list) return;
+function sortRows(rows) {
+  const favoritesFirst = !!document.getElementById("favoritesFirst")?.checked;
+  const recentFirst = !!document.getElementById("recentFirst")?.checked;
 
-  const query = safeValue(searchInput?.value);
-  const mode = searchMode?.value || "all";
-  const favOnly = favoritesOnly?.checked || false;
-  const favFirst = favoritesFirst?.checked || false;
-  const recOnly = recentOnly?.checked || false;
-  const recFirst = recentFirst?.checked || false;
-  const excludeAIOn = excludeAI?.checked || false;
-  const excludeProblematicOn = excludeProblematic?.checked || false;
+  return [...rows].sort((a, b) => {
+    const aId = getRowId(a);
+    const bId = getRowId(b);
 
-  let filtered = allData.filter((item) => {
-    const itemKey = getItemKey(item);
-
-    if (favOnly && !favorites.has(itemKey)) return false;
-    if (recOnly && !recent.includes(itemKey)) return false;
-    if (excludeAIOn && hasTruthyFlag(item.AI_Supported)) return false;
-    if (excludeProblematicOn && hasTruthyFlag(item.Problematic_History)) return false;
-
-    if (!query) return true;
-
-    const title = safeValue(item.Title);
-    const creator = safeValue(item.Creator);
-    const keywords = safeValue(item._keywordSearch);
-    const language = safeValue(item.Language);
-
-    if (mode === "all") {
-      return (
-        title.includes(query) ||
-        creator.includes(query) ||
-        keywords.includes(query) ||
-        language.includes(query)
-      );
+    if (favoritesFirst) {
+      const aFav = favorites.has(aId) ? 1 : 0;
+      const bFav = favorites.has(bId) ? 1 : 0;
+      if (aFav !== bFav) return bFav - aFav;
     }
 
-    if (mode === "title") return title.includes(query);
-    if (mode === "creator") return creator.includes(query);
-    if (mode === "keywords") return keywords.includes(query);
-    if (mode === "language") return language.includes(query);
+    if (recentFirst) {
+      const aRecent = isRecent(a) ? 1 : 0;
+      const bRecent = isRecent(b) ? 1 : 0;
+      if (aRecent !== bRecent) return bRecent - aRecent;
+    }
 
-    return true;
+    return getTitleText(a).localeCompare(getTitleText(b));
   });
-
-  filtered.sort((a, b) => {
-    const aKey = getItemKey(a);
-    const bKey = getItemKey(b);
-
-    const aFav = favorites.has(aKey);
-    const bFav = favorites.has(bKey);
-
-    const aRec = recent.indexOf(aKey);
-    const bRec = recent.indexOf(bKey);
-
-    if (recFirst && aRec !== bRec) {
-      return (aRec === -1 ? Infinity : aRec) - (bRec === -1 ? Infinity : bRec);
-    }
-
-    if (favFirst && aFav !== bFav) {
-      return aFav ? -1 : 1;
-    }
-
-    return (a.Title || "").localeCompare(b.Title || "");
-  });
-
-  renderList(filtered);
 }
 
-// RENDER
-function renderList(data) {
+function renderList() {
+  const list = document.getElementById("list");
   if (!list) return;
 
   list.innerHTML = "";
 
-  if (!data.length) {
-    list.innerHTML = `<div class="load-error">No results found.</div>`;
+  const filtered = sortRows(getFilteredRows());
+
+  if (!filtered.length) {
+    const empty = document.createElement("div");
+    empty.className = "load-error";
+    empty.textContent = "No results found.";
+    list.appendChild(empty);
     return;
   }
 
-  data.forEach((item) => {
-    const itemKey = getItemKey(item);
+  filtered.forEach((row, index) => {
+    const rowId = getRowId(row, index);
+    const title = getTitleText(row);
+    const creator = getCreatorText(row);
+    const videoLink = getVideoLink(row);
 
-    const card = document.createElement("div");
+    const card = document.createElement("article");
     card.className = "card";
 
-    if (item.ID) {
-      const idLabel = document.createElement("button");
-      idLabel.className = "card-id";
-      idLabel.type = "button";
-      idLabel.textContent = `ID: ${item.ID}`;
-      idLabel.setAttribute("aria-label", `Copy ID ${item.ID}`);
+    const idBadge = document.createElement("div");
+    idBadge.className = "card-id";
+    idBadge.textContent = `Id: ${rowId}`;
 
-      idLabel.addEventListener("click", () => {
-        copyID(item.ID, idLabel);
-      });
-
-      card.appendChild(idLabel);
-    }
-
-    // LEFT
     const top = document.createElement("div");
     top.className = "top";
 
@@ -487,130 +282,246 @@ function renderList(data) {
     topMain.className = "top-main";
 
     const star = document.createElement("button");
-    star.className = "star";
     star.type = "button";
+    star.className = `star ${favorites.has(rowId) ? "fav" : ""}`;
+    star.setAttribute("aria-label", favorites.has(rowId) ? "Remove favorite" : "Add favorite");
     star.textContent = "★";
-    star.setAttribute("aria-label", "Toggle favorite");
-
-    if (favorites.has(itemKey)) {
-      star.classList.add("fav");
-    }
-
     star.addEventListener("click", () => {
-      toggleFavorite(itemKey);
+      if (favorites.has(rowId)) {
+        favorites.delete(rowId);
+      } else {
+        favorites.add(rowId);
+      }
+      saveFavorites();
+      renderList();
     });
 
     const textBlock = document.createElement("div");
     textBlock.className = "text-block";
 
-    const title = document.createElement("div");
-    title.className = "title";
-    title.textContent = item.Title || "";
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "title";
+    titleDiv.textContent = title || "Untitled";
 
     const meta = document.createElement("div");
     meta.className = "meta";
 
-    const creator = document.createElement("div");
-    creator.className = "creator";
-    creator.textContent = item.Creator || "";
+    const creatorDiv = document.createElement("div");
+    creatorDiv.className = "creator";
+    creatorDiv.textContent = creator ? `Creator: ${creator}` : "";
 
-    if (item.Creator) {
-      meta.appendChild(creator);
-    }
-
-    textBlock.appendChild(title);
+    meta.appendChild(creatorDiv);
+    textBlock.appendChild(titleDiv);
     textBlock.appendChild(meta);
 
     topMain.appendChild(star);
     topMain.appendChild(textBlock);
     top.appendChild(topMain);
 
-    // MIDDLE
-    const keywords = document.createElement("div");
-    keywords.className = "keywords";
+    const keywordsCol = document.createElement("div");
+    keywordsCol.className = "keywords";
 
-    addPills(keywords, item.Early_Literacy_Skill, "early-literacy-pill", applyKeywordSearch);
-    addPills(keywords, item.Physical_Skill, "physical-pill", applyKeywordSearch);
-    addPills(keywords, item.Cognitive_Skill, "cognitive-pill", applyKeywordSearch);
-    addPills(keywords, item.Social_Emotional_Skill, "social-emotional-pill", applyKeywordSearch);
-    addPills(keywords, item.Concept, "concept-pill", applyKeywordSearch);
-    addPills(keywords, item.Theme, "theme-pill", applyKeywordSearch);
-    addPills(keywords, item.Tune, "tune-pill", applyKeywordSearch);
-    addPills(keywords, item.Language, "language-pill", applyLanguageSearch, "Search language");
-    addPills(keywords, item.Prop, "prop-pill", applyKeywordSearch);
-    addPills(keywords, item.Music_Genre, "music-genre-pill", applyKeywordSearch);
-    addPills(keywords, item.Format, "format-pill", applyKeywordSearch);
-    addPills(keywords, item.Music_Source, "music-source-pill", applyKeywordSearch);
+    CATEGORY_CONFIG.forEach(category => {
+      const values = splitMultiValue(getField(row, [category.key]));
+      if (!values.length) return;
 
-    // RIGHT
+      if (category.type === "language") {
+        addPillsFromColumn(
+          keywordsCol,
+          values,
+          category.className,
+          activeLanguage,
+          toggleLanguage
+        );
+      } else {
+        addPillsFromColumn(
+          keywordsCol,
+          values,
+          category.className,
+          activeKeyword,
+          toggleKeyword
+        );
+      }
+    });
+
     const links = document.createElement("div");
     links.className = "links";
 
-    if (item.Video) {
-      const videoLink = document.createElement("a");
-      videoLink.className = "icon-link";
-      videoLink.href = item.Video;
-      videoLink.target = "_blank";
-      videoLink.rel = "noopener noreferrer";
-      videoLink.textContent = "🎬 Video";
-
-      videoLink.addEventListener("click", () => {
-        markRecent(itemKey);
-      });
-
-      links.appendChild(videoLink);
-    }
-
-    if (item.Supplemental) {
-      const supplementalLink = document.createElement("a");
-      supplementalLink.className = "icon-link";
-      supplementalLink.href = item.Supplemental;
-      supplementalLink.target = "_blank";
-      supplementalLink.rel = "noopener noreferrer";
-      supplementalLink.textContent = "📎 Extra";
-
-      supplementalLink.addEventListener("click", () => {
-        markRecent(itemKey);
-      });
-
-      links.appendChild(supplementalLink);
+    if (videoLink) {
+      const link = document.createElement("a");
+      link.className = "icon-link";
+      link.href = videoLink;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Open Link";
+      links.appendChild(link);
     }
 
     const statusFlags = document.createElement("div");
     statusFlags.className = "status-flags";
 
-    if (hasTruthyFlag(item.AI_Supported)) {
-      const aiFlag = document.createElement("button");
+    if (isAISupported(row)) {
+      const aiFlag = document.createElement("div");
       aiFlag.className = "status-flag ai-flag";
-      aiFlag.type = "button";
-      aiFlag.textContent = "💻 AI-Supported";
-      aiFlag.setAttribute("aria-label", "Search keyword AI-Supported");
-      aiFlag.addEventListener("click", () => {
-        applyKeywordSearch("AI-Supported");
-      });
+      aiFlag.textContent = "AI-Supported";
       statusFlags.appendChild(aiFlag);
     }
 
-    if (hasTruthyFlag(item.Problematic_History)) {
-      const problematicFlag = document.createElement("button");
-      problematicFlag.className = "status-flag warning-flag";
-      problematicFlag.type = "button";
-      problematicFlag.textContent = "🚩 Problematic History";
-      problematicFlag.setAttribute("aria-label", "Search keyword Problematic History");
-      problematicFlag.addEventListener("click", () => {
-        applyKeywordSearch("Problematic History");
-      });
-      statusFlags.appendChild(problematicFlag);
+    if (hasProblematicHistory(row)) {
+      const warningFlag = document.createElement("div");
+      warningFlag.className = "status-flag warning-flag";
+      warningFlag.textContent = "Problematic History";
+      statusFlags.appendChild(warningFlag);
     }
 
-    if (statusFlags.childNodes.length) {
+    if (statusFlags.children.length) {
       links.appendChild(statusFlags);
     }
 
+    card.appendChild(idBadge);
     card.appendChild(top);
-    card.appendChild(keywords);
+    card.appendChild(keywordsCol);
     card.appendChild(links);
 
     list.appendChild(card);
   });
 }
+
+function resetAllFilters() {
+  const idsToClear = [
+    "favoritesOnly",
+    "favoritesFirst",
+    "recentOnly",
+    "recentFirst",
+    "excludeAI",
+    "excludeProblematic"
+  ];
+
+  const search = document.getElementById("search");
+  const searchMode = document.getElementById("searchMode");
+
+  if (search) search.value = "";
+  if (searchMode) searchMode.value = "all";
+
+  idsToClear.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+
+  activeKeyword = "";
+  activeLanguage = "";
+
+  renderList();
+}
+
+function buildFavoritesEmailText() {
+  const favoriteRows = allRows.filter((row, index) => favorites.has(getRowId(row, index)));
+
+  if (!favoriteRows.length) {
+    return "No favorites selected yet.";
+  }
+
+  return favoriteRows.map((row, index) => {
+    const title = getTitleText(row) || "Untitled";
+    const creator = getCreatorText(row) || "Unknown creator";
+    const link = getVideoLink(row) || "";
+    return `${index + 1}. ${title} — ${creator}${link ? `\n${link}` : ""}`;
+  }).join("\n\n");
+}
+
+function setupControls() {
+  const menuToggle = document.getElementById("menuToggle");
+  const navBar = document.getElementById("navBar");
+
+  if (menuToggle && navBar) {
+    menuToggle.addEventListener("click", () => {
+      const isOpen = navBar.classList.toggle("open");
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+  }
+
+  const search = document.getElementById("search");
+  const searchMode = document.getElementById("searchMode");
+  const resetSearchBtn = document.getElementById("resetSearchBtn");
+
+  if (search) search.addEventListener("input", renderList);
+  if (searchMode) searchMode.addEventListener("change", renderList);
+  if (resetSearchBtn) resetSearchBtn.addEventListener("click", resetAllFilters);
+
+  [
+    "favoritesOnly",
+    "favoritesFirst",
+    "recentOnly",
+    "recentFirst",
+    "excludeAI",
+    "excludeProblematic"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", renderList);
+  });
+
+  const copyFavoritesBtn = document.getElementById("copyFavoritesBtn");
+  if (copyFavoritesBtn) {
+    copyFavoritesBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(buildFavoritesEmailText());
+        const oldText = copyFavoritesBtn.textContent;
+        copyFavoritesBtn.textContent = "Copied!";
+        setTimeout(() => {
+          copyFavoritesBtn.textContent = oldText;
+        }, 1400);
+      } catch {
+        alert("Could not copy favorites.");
+      }
+    });
+  }
+
+  const clearFavoritesBtn = document.getElementById("clearFavoritesBtn");
+  if (clearFavoritesBtn) {
+    clearFavoritesBtn.addEventListener("click", () => {
+      favorites.clear();
+      saveFavorites();
+      renderList();
+    });
+  }
+
+  const emailFavoritesBtn = document.getElementById("emailFavoritesBtn");
+  const emailAddress = document.getElementById("emailAddress");
+
+  if (emailFavoritesBtn && emailAddress) {
+    emailFavoritesBtn.addEventListener("click", () => {
+      const email = emailAddress.value.trim();
+      if (!email) {
+        alert("Please enter an email address.");
+        return;
+      }
+
+      const subject = encodeURIComponent("Find a Rhyme Favorites");
+      const body = encodeURIComponent(buildFavoritesEmailText());
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    });
+  }
+}
+
+function loadCSV() {
+  const list = document.getElementById("list");
+  if (!list) return;
+
+  Papa.parse(CSV_PATH, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: (results) => {
+      allRows = results.data || [];
+      renderList();
+    },
+    error: () => {
+      list.innerHTML = '<div class="load-error">Could not load the database.</div>';
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupControls();
+  loadCSV();
+});

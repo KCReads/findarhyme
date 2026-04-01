@@ -1,3 +1,18 @@
+:root {
+  --kw1:  #C8555C;  /* Early Literacy Skill */
+  --kw2:  #D98C3F;  /* Developmental Skill */
+  --kw3:  #D9C46B;  /* Social Skill */
+  --kw4:  #7FAF7A;  /* Theme */
+  --kw5:  #5FA8A0;  /* Tune */
+  --kw6:  #5C8FA8;  /* Language */
+  --kw7:  #6C7FD1;  /* Prop */
+  --kw8:  #8A5FAF;  /* Music Genre */
+  --kw9:  #A65C9A;  /* Song Type */
+  --kw10: #D16A9B;  /* Recorded Music */
+  --kw11: #9AA5B1;  /* AI-Supported */
+  --kw12: #7A6C85;  /* Problematic History */
+}
+
 /* GLOBAL SIZING */
 *,
 *::before,
@@ -39,7 +54,6 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -50,7 +64,6 @@ body {
   min-width: 0;
 }
 
-
 .logo {
   height: 52px;
   width: auto;
@@ -60,14 +73,9 @@ body {
 
 .brand-title {
   margin: 0;
-  font-family: 'Nunito', sans-serif;
   font-weight: 800;
   font-size: 28px;
   color: #ffffff;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
   line-height: 1.1;
 }
 
@@ -76,6 +84,7 @@ body {
   font-style: italic;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.92);
+  margin-top: 2px;
 }
 
 /* HAMBURGER */
@@ -107,7 +116,6 @@ body {
 
 .nav-bar a {
   text-decoration: none;
-  font-family: 'Nunito', sans-serif;
   font-weight: 700;
   font-size: 15px;
   color: white;
@@ -176,7 +184,8 @@ body {
   min-width: 0;
 }
 
-#searchMode {
+#searchMode,
+#resetSearchBtn {
   flex: 0 0 auto;
 }
 
@@ -304,28 +313,18 @@ body {
   padding: 3px 7px;
   border-radius: 6px;
   border: none;
-  cursor: pointer;
   z-index: 2;
-}
-
-.card-id:hover {
-  background: rgba(255, 255, 255, 0.98);
-}
-
-.card-id:disabled {
-  opacity: 0.7;
-  cursor: default;
 }
 
 /* COLUMNS */
 .top {
-  flex: 1.4;
+  flex: 1.35;
   min-width: 0;
-  padding-right: 115px;
+  padding-right: 72px;
 }
 
 .keywords {
-  flex: 2;
+  flex: 2.2;
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
@@ -334,7 +333,7 @@ body {
 }
 
 .links {
-  flex: 1.2;
+  flex: 1.1;
   min-width: 0;
   display: flex;
   justify-content: flex-end;
@@ -373,67 +372,129 @@ body {
 /* PILLS */
 .pill {
   font-size: 11px;
-  padding: 4px 9px;
+  padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid transparent;
   cursor: pointer;
-  background: #f1f5f9;
   font-family: inherit;
+  font-weight: 700;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease,
+    opacity 0.18s ease;
 }
 
 .pill:hover {
   transform: translateY(-1px);
 }
 
-/* CATEGORY COLORS */
+.pill:active {
+  transform: translateY(0);
+}
+
+.pill:not(.active-pill) {
+  opacity: 0.96;
+}
+
+.active-pill {
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.08);
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* COLUMN-BASED KEYWORD COLORS */
 .early-literacy-pill {
-  background: #ffe4e6;
+  background: rgba(200, 85, 92, 0.14);
+  color: var(--kw1);
+  border-color: rgba(200, 85, 92, 0.28);
+}
+.early-literacy-pill.active-pill {
+  background: var(--kw1);
 }
 
-.physical-pill {
-  background: #fee2e2;
+.developmental-pill {
+  background: rgba(217, 140, 63, 0.14);
+  color: var(--kw2);
+  border-color: rgba(217, 140, 63, 0.28);
+}
+.developmental-pill.active-pill {
+  background: var(--kw2);
 }
 
-.cognitive-pill {
-  background: #fef3c7;
+.social-skill-pill {
+  background: rgba(217, 196, 107, 0.18);
+  color: #7b6500;
+  border-color: rgba(217, 196, 107, 0.34);
 }
-
-.social-emotional-pill {
-  background: #dcfce7;
-}
-
-.concept-pill {
-  background: #dbeafe;
+.social-skill-pill.active-pill {
+  background: var(--kw3);
+  color: #3d3200 !important;
 }
 
 .theme-pill {
-  background: #e0f2fe;
+  background: rgba(127, 175, 122, 0.15);
+  color: #4e784a;
+  border-color: rgba(127, 175, 122, 0.30);
+}
+.theme-pill.active-pill {
+  background: var(--kw4);
 }
 
 .tune-pill {
-  background: #fae8ff;
+  background: rgba(95, 168, 160, 0.15);
+  color: #3f7973;
+  border-color: rgba(95, 168, 160, 0.30);
+}
+.tune-pill.active-pill {
+  background: var(--kw5);
 }
 
 .language-pill {
-  background: #ede9fe;
-  border-width: 2px;
-  font-weight: 700;
+  background: rgba(92, 143, 168, 0.15);
+  color: #456f85;
+  border-color: rgba(92, 143, 168, 0.32);
+}
+.language-pill.active-pill {
+  background: var(--kw6);
 }
 
 .prop-pill {
-  background: #fce7f3;
+  background: rgba(108, 127, 209, 0.14);
+  color: #5062b6;
+  border-color: rgba(108, 127, 209, 0.28);
+}
+.prop-pill.active-pill {
+  background: var(--kw7);
 }
 
 .music-genre-pill {
-  background: #cffafe;
+  background: rgba(138, 95, 175, 0.14);
+  color: #6d4690;
+  border-color: rgba(138, 95, 175, 0.28);
+}
+.music-genre-pill.active-pill {
+  background: var(--kw8);
 }
 
-.format-pill {
-  background: #ecfccb;
+.song-type-pill {
+  background: rgba(166, 92, 154, 0.14);
+  color: #87497d;
+  border-color: rgba(166, 92, 154, 0.28);
+}
+.song-type-pill.active-pill {
+  background: var(--kw9);
 }
 
-.music-source-pill {
-  background: #f3e8ff;
+.recorded-music-pill {
+  background: rgba(209, 106, 155, 0.14);
+  color: #a34f78;
+  border-color: rgba(209, 106, 155, 0.28);
+}
+.recorded-music-pill.active-pill {
+  background: var(--kw10);
 }
 
 /* STAR */
@@ -444,6 +505,8 @@ body {
   cursor: pointer;
   color: #9ca3af;
   flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
 }
 
 .star.fav {
@@ -460,6 +523,10 @@ body {
   align-items: center;
   color: inherit;
   white-space: nowrap;
+}
+
+.icon-link:hover {
+  background: #eef2f7;
 }
 
 /* STATUS FLAGS */
@@ -481,116 +548,19 @@ body {
   background: rgba(255, 255, 255, 0.9);
   color: #4b5563;
   font-family: inherit;
-  cursor: pointer;
   text-align: right;
 }
 
-.status-flag:hover {
-  background: #f8fafc;
-  transform: translateY(-1px);
-}
-
 .ai-flag {
-  border-color: #c7d2fe;
-  background: #eef2ff;
-  color: #3730a3;
+  border-color: rgba(154, 165, 177, 0.42);
+  background: rgba(154, 165, 177, 0.14);
+  color: #5f6975;
 }
 
 .warning-flag {
-  border-color: #fca5a5;
-  background: #fef2f2;
-  color: #7f1d1d;
-}
-
-/* INFO PAGES */
-.info-page {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.info-card {
-  position: relative;
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px 30px 28px 38px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-}
-
-.info-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 10px;
-  background: linear-gradient(
-    to bottom,
-    #ff6b6b,
-    #feca57,
-    #48dbfb,
-    #1dd1a1,
-    #5f27cd
-  );
-  border-radius: 16px 0 0 16px;
-}
-
-.info-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.info-title {
-  margin: 0;
-  font-family: 'Nunito', sans-serif;
-  font-size: 30px;
-  color: #4876bb;
-}
-
-.info-subtitle {
-  margin-top: 20px;
-  margin-bottom: 8px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 20px;
-  color: #4876bb;
-}
-
-.info-card p {
-  margin: 0;
-  line-height: 1.6;
-}
-
-.info-card p + p {
-  margin-top: 8px;
-}
-
-.back-link {
-  font-size: 14px;
-  text-decoration: none;
-  background: #f8fafc;
-  color: #4876bb;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #d8deea;
-}
-
-.back-link:hover {
-  background: #e0f2fe;
-}
-
-.plain-page::before,
-.plain-page::after,
-.plain-page .page-wrap::before,
-.plain-page .page-wrap::after,
-.plain-page main::before,
-.plain-page main::after,
-.plain-page .back-link::before,
-.plain-page .back-link::after {
-  content: none !important;
-  display: none !important;
+  border-color: rgba(122, 108, 133, 0.42);
+  background: rgba(122, 108, 133, 0.14);
+  color: #5e5368;
 }
 
 /* MOBILE */
@@ -611,9 +581,6 @@ body {
   }
 
   .brand-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
     min-width: 0;
   }
 
@@ -709,21 +676,5 @@ body {
 
   .status-flags {
     align-items: flex-start;
-  }
-
-  .info-card {
-    padding: 22px 18px 22px 24px;
-  }
-
-  .info-card::before {
-    width: 8px;
-  }
-
-  .info-title {
-    font-size: 26px;
-  }
-
-  .info-subtitle {
-    font-size: 18px;
   }
 }
