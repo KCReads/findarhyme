@@ -141,9 +141,7 @@ function getLanguageValuesByRow(row) {
 }
 
 function getKeywordSearchText(row) {
-  return [
-    getKeywordValuesByRow(row).join(" ")
-  ].join(" ").toLowerCase();
+  return getKeywordValuesByRow(row).join(" ").toLowerCase();
 }
 
 function getLanguageSearchText(row) {
@@ -178,8 +176,6 @@ function parseBooleanQuery(input) {
   const include = [];
   const exclude = [];
 
-  // Only treat + or - as operators when preceded by whitespace and followed by whitespace.
-  // Hyphenated terms like "AI-Supported" stay intact.
   const tokens = raw.split(/\s(?=[+-]\s)/);
 
   tokens.forEach(token => {
@@ -252,14 +248,21 @@ function addExcludeTermToSearch(term) {
 
 function removeTermFromSearch(term) {
   const searchInput = document.getElementById("search");
+  const searchMode = document.getElementById("searchMode");
   const current = parseBooleanQuery(searchInput?.value || "");
   const normalizedTerm = lower(term);
 
   const include = current.include.filter(t => lower(t) !== normalizedTerm);
   const exclude = current.exclude.filter(t => lower(t) !== normalizedTerm);
 
+  const newValue = buildBooleanQuery(include, exclude);
+
   if (searchInput) {
-    searchInput.value = buildBooleanQuery(include, exclude);
+    searchInput.value = newValue;
+  }
+
+  if (!newValue && searchMode) {
+    searchMode.value = "all";
   }
 }
 
@@ -276,11 +279,19 @@ function isTermExcludedInSearch(term) {
 }
 
 function toggleSearchTerm(term, mode) {
+  const searchInput = document.getElementById("search");
+  const searchMode = document.getElementById("searchMode");
+
   if (isTermIncludedInSearch(term)) {
     removeTermFromSearch(term);
   } else {
     addIncludeTermToSearch(term, mode);
   }
+
+  if (!normalize(searchInput?.value || "") && searchMode) {
+    searchMode.value = "all";
+  }
+
   renderList();
 }
 
@@ -499,9 +510,31 @@ function renderList() {
     const meta = document.createElement("div");
     meta.className = "meta";
 
-    const creator = document.createElement("div");
-    creator.className = "creator";
-    creator.textContent = getCreator(row) ? `Creator: ${getCreator(row)}` : "";
+    const creatorName = getCreator(row);
+
+    const creator = document.createElement("button");
+    creator.type = "button";
+    creator.className = "creator creator-search";
+    creator.textContent = creatorName ? `Creator: ${creatorName}` : "";
+
+    if (creatorName) {
+      creator.addEventListener("click", () => {
+        const searchInput = document.getElementById("search");
+        const searchMode = document.getElementById("searchMode");
+
+        if (searchInput) {
+          searchInput.value = creatorName;
+        }
+
+        if (searchMode) {
+          searchMode.value = "creator";
+        }
+
+        renderList();
+      });
+    } else {
+      creator.disabled = true;
+    }
 
     meta.appendChild(creator);
     textBlock.appendChild(title);
@@ -616,7 +649,15 @@ function setup() {
   const navBar = document.getElementById("navBar");
 
   if (search) {
-    search.addEventListener("input", renderList);
+    search.addEventListener("input", () => {
+      const searchModeEl = document.getElementById("searchMode");
+
+      if (!normalize(search.value) && searchModeEl) {
+        searchModeEl.value = "all";
+      }
+
+      renderList();
+    });
   }
 
   if (searchMode) {
