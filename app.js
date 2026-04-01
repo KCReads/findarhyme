@@ -82,8 +82,27 @@ function getCreator(row) {
   return getField(row, ["Creator"]);
 }
 
-function getLink(row) {
-  return getField(row, ["Video_Link", "Video Link", "Link", "URL", "Url"]);
+function getVideoLink(row) {
+  return getField(row, [
+    "Video_Link",
+    "Video Link",
+    "Video",
+    "Link",
+    "URL",
+    "Url"
+  ]);
+}
+
+function getSupplementLink(row) {
+  return getField(row, [
+    "Supplement_Link",
+    "Supplement Link",
+    "Supplement",
+    "Handout_Link",
+    "Handout Link",
+    "Resource_Link",
+    "Resource Link"
+  ]);
 }
 
 function isTruthyFlag(value) {
@@ -175,22 +194,6 @@ function toggleLanguage(value) {
     setSearchFromToggle(value, "language");
   }
   renderList();
-}
-
-function addPillsFromColumn(container, values, className, activeValue, toggleFn) {
-  values.forEach(value => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
-
-    const pill = buildPill(trimmed, className);
-
-    if (trimmed === activeValue) {
-      pill.classList.add("active-pill");
-    }
-
-    pill.addEventListener("click", () => toggleFn(trimmed));
-    container.appendChild(pill);
-  });
 }
 
 function getFilteredRows() {
@@ -331,6 +334,16 @@ function buildGroupedKeywords(row) {
   return kw;
 }
 
+function buildLinkButton(href, label) {
+  const a = document.createElement("a");
+  a.href = href;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.className = "icon-link";
+  a.textContent = label;
+  return a;
+}
+
 function renderList() {
   const list = document.getElementById("list");
   if (!list) return;
@@ -402,15 +415,15 @@ function renderList() {
     const links = document.createElement("div");
     links.className = "links";
 
-    const link = getLink(row);
-    if (link) {
-      const a = document.createElement("a");
-      a.href = link;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.className = "icon-link";
-      a.textContent = "Open Link";
-      links.appendChild(a);
+    const videoLink = getVideoLink(row);
+    const supplementLink = getSupplementLink(row);
+
+    if (videoLink) {
+      links.appendChild(buildLinkButton(videoLink, "Video"));
+    }
+
+    if (supplementLink) {
+      links.appendChild(buildLinkButton(supplementLink, "Supplement"));
     }
 
     const statusFlags = document.createElement("div");
@@ -478,8 +491,14 @@ function buildFavoritesEmailText() {
   return favoriteRows.map((row, index) => {
     const title = getTitle(row) || "Untitled";
     const creator = getCreator(row) || "Unknown creator";
-    const link = getLink(row) || "";
-    return `${index + 1}. ${title} — ${creator}${link ? `\n${link}` : ""}`;
+    const video = getVideoLink(row) || "";
+    const supplement = getSupplementLink(row) || "";
+
+    return [
+      `${index + 1}. ${title} — ${creator}`,
+      video ? `Video: ${video}` : "",
+      supplement ? `Supplement: ${supplement}` : ""
+    ].filter(Boolean).join("\n");
   }).join("\n\n");
 }
 
