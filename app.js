@@ -1,4 +1,4 @@
-const CSV_PATH = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ14cW0LzMG6hPjkdWry9d_X8P_Uag-M84cN00o317GK9CCJVuknQkgbTE-O60P54wU7Wd_Uxkuna2h/pub?gid=1251597746&single=true&output=csv";
+const CSV_PATH = "songs.csv";
 
 const CATEGORY_CONFIG = [
   { key: "Early_Literacy_Skill", className: "early-literacy-pill", type: "keyword", group: "Skills" },
@@ -24,8 +24,6 @@ const CATEGORY_GROUPS = [
 ];
 
 let allRows = [];
-let onlyAISupported = false;
-let onlyProblematic = false;
 
 const favorites = new Set(JSON.parse(localStorage.getItem("favorites") || "[]"));
 
@@ -125,11 +123,16 @@ function isRecent(row) {
 
 function getKeywordValuesByRow(row) {
   const values = [];
+
   CATEGORY_CONFIG.forEach(category => {
     if (category.type === "keyword") {
       values.push(...splitValues(getField(row, [category.key])));
     }
   });
+
+  if (isAISupported(row)) values.push("AI-Supported");
+  if (hasProblematic(row)) values.push("Problematic History");
+
   return values;
 }
 
@@ -138,7 +141,9 @@ function getLanguageValuesByRow(row) {
 }
 
 function getKeywordSearchText(row) {
-  return getKeywordValuesByRow(row).join(" ").toLowerCase();
+  return [
+    getKeywordValuesByRow(row).join(" ")
+  ].join(" ").toLowerCase();
 }
 
 function getLanguageSearchText(row) {
@@ -168,30 +173,31 @@ function buildPill(text, className) {
 
 function parseBooleanQuery(input) {
   const raw = normalize(input);
-  if (!raw) {
-    return { include: [], exclude: [] };
-  }
+  if (!raw) return { include: [], exclude: [] };
 
-  const parts = [];
-  const regex = /([+-]?)\s*([^+-]+)/g;
-  let match;
+  const include = [];
+  const exclude = [];
 
-  while ((match = regex.exec(raw)) !== null) {
-    const operator = match[1] || "+";
-    const term = normalize(match[2]);
-    if (!term) continue;
+  // Only treat + or - as operators when preceded by whitespace and followed by whitespace.
+  // Hyphenated terms like "AI-Supported" stay intact.
+  const tokens = raw.split(/\s(?=[+-]\s)/);
 
-    if (operator === "-") {
-      parts.push({ type: "exclude", term });
+  tokens.forEach(token => {
+    const trimmed = normalize(token);
+    if (!trimmed) return;
+
+    if (trimmed.startsWith("- ")) {
+      const term = normalize(trimmed.slice(2));
+      if (term) exclude.push(term);
+    } else if (trimmed.startsWith("+ ")) {
+      const term = normalize(trimmed.slice(2));
+      if (term) include.push(term);
     } else {
-      parts.push({ type: "include", term });
+      include.push(trimmed);
     }
-  }
+  });
 
-  return {
-    include: parts.filter(p => p.type === "include").map(p => p.term),
-    exclude: parts.filter(p => p.type === "exclude").map(p => p.term)
-  };
+  return { include, exclude };
 }
 
 function buildBooleanQuery(includeTerms, excludeTerms) {
@@ -209,44 +215,79 @@ function buildBooleanQuery(includeTerms, excludeTerms) {
   return pieces.join(" ").trim();
 }
 
-function toggleSearchTerm(term, mode) {
+function addIncludeTermToSearch(term, mode = null) {
   const searchInput = document.getElementById("search");
   const searchMode = document.getElementById("searchMode");
   const current = parseBooleanQuery(searchInput?.value || "");
-
   const normalizedTerm = lower(term);
+
   const include = current.include.filter(t => lower(t) !== normalizedTerm);
   const exclude = current.exclude.filter(t => lower(t) !== normalizedTerm);
 
-  const wasIncluded = current.include.some(t => lower(t) === normalizedTerm);
-
-  if (!wasIncluded) {
-    include.push(term);
-  }
+  include.push(term);
 
   if (searchInput) {
     searchInput.value = buildBooleanQuery(include, exclude);
   }
 
-  if (searchMode) {
+  if (searchMode && mode) {
     searchMode.value = mode;
   }
-
-  renderList();
 }
 
-function isTermActiveInSearch(term) {
+function addExcludeTermToSearch(term) {
+  const searchInput = document.getElementById("search");
+  const current = parseBooleanQuery(searchInput?.value || "");
+  const normalizedTerm = lower(term);
+
+  const include = current.include.filter(t => lower(t) !== normalizedTerm);
+  const exclude = current.exclude.filter(t => lower(t) !== normalizedTerm);
+
+  exclude.push(term);
+
+  if (searchInput) {
+    searchInput.value = buildBooleanQuery(include, exclude);
+  }
+}
+
+function removeTermFromSearch(term) {
+  const searchInput = document.getElementById("search");
+  const current = parseBooleanQuery(searchInput?.value || "");
+  const normalizedTerm = lower(term);
+
+  const include = current.include.filter(t => lower(t) !== normalizedTerm);
+  const exclude = current.exclude.filter(t => lower(t) !== normalizedTerm);
+
+  if (searchInput) {
+    searchInput.value = buildBooleanQuery(include, exclude);
+  }
+}
+
+function isTermIncludedInSearch(term) {
   const searchInput = document.getElementById("search");
   const parsed = parseBooleanQuery(searchInput?.value || "");
   return parsed.include.some(t => lower(t) === lower(term));
 }
 
+function isTermExcludedInSearch(term) {
+  const searchInput = document.getElementById("search");
+  const parsed = parseBooleanQuery(searchInput?.value || "");
+  return parsed.exclude.some(t => lower(t) === lower(term));
+}
+
+function toggleSearchTerm(term, mode) {
+  if (isTermIncludedInSearch(term)) {
+    removeTermFromSearch(term);
+  } else {
+    addIncludeTermToSearch(term, mode);
+  }
+  renderList();
+}
+
 function textMatchesBooleanQuery(text, parsedQuery) {
   const haystack = lower(text);
-
   const includesOk = parsedQuery.include.every(term => haystack.includes(lower(term)));
   const excludesOk = parsedQuery.exclude.every(term => !haystack.includes(lower(term)));
-
   return includesOk && excludesOk;
 }
 
@@ -260,8 +301,6 @@ function getFilteredRows() {
   const searchMode = document.getElementById("searchMode")?.value || "all";
   const favoritesOnly = !!document.getElementById("favoritesOnly")?.checked;
   const recentOnly = !!document.getElementById("recentOnly")?.checked;
-  const excludeAI = !!document.getElementById("excludeAI")?.checked;
-  const excludeProblematic = !!document.getElementById("excludeProblematic")?.checked;
 
   return allRows.filter((row, index) => {
     const rowId = getRowId(row, index);
@@ -282,17 +321,10 @@ function getFilteredRows() {
       }
     }
 
-    const matchesAIOnly = !onlyAISupported || isAISupported(row);
-    const matchesProblematicOnly = !onlyProblematic || hasProblematic(row);
-
     return (
       matchesSearch &&
-      matchesAIOnly &&
-      matchesProblematicOnly &&
       (!favoritesOnly || favorites.has(rowId)) &&
-      (!recentOnly || isRecent(row)) &&
-      (!excludeAI || !isAISupported(row)) &&
-      (!excludeProblematic || !hasProblematic(row))
+      (!recentOnly || isRecent(row))
     );
   });
 }
@@ -353,7 +385,7 @@ function buildGroupedKeywords(row) {
 
         const pill = buildPill(trimmed, config.className);
 
-        if (isTermActiveInSearch(trimmed)) {
+        if (isTermIncludedInSearch(trimmed)) {
           pill.classList.add("active-pill");
         }
 
@@ -398,9 +430,24 @@ function buildStatusFlag(label, icon, className, isActive, onClick) {
   return btn;
 }
 
+function syncExcludeCheckboxesWithSearch() {
+  const excludeAICheckbox = document.getElementById("excludeAI");
+  const excludeProblematicCheckbox = document.getElementById("excludeProblematic");
+
+  if (excludeAICheckbox) {
+    excludeAICheckbox.checked = isTermExcludedInSearch("AI-Supported");
+  }
+
+  if (excludeProblematicCheckbox) {
+    excludeProblematicCheckbox.checked = isTermExcludedInSearch("Problematic History");
+  }
+}
+
 function renderList() {
   const list = document.getElementById("list");
   if (!list) return;
+
+  syncExcludeCheckboxesWithSearch();
 
   list.innerHTML = "";
 
@@ -489,11 +536,8 @@ function renderList() {
           "AI-Supported",
           "💻",
           "ai-flag",
-          onlyAISupported,
-          () => {
-            onlyAISupported = !onlyAISupported;
-            renderList();
-          }
+          isTermIncludedInSearch("AI-Supported"),
+          () => toggleSearchTerm("AI-Supported", "all")
         )
       );
     }
@@ -504,11 +548,8 @@ function renderList() {
           "Problematic History",
           "🚩",
           "warning-flag",
-          onlyProblematic,
-          () => {
-            onlyProblematic = !onlyProblematic;
-            renderList();
-          }
+          isTermIncludedInSearch("Problematic History"),
+          () => toggleSearchTerm("Problematic History", "all")
         )
       );
     }
@@ -537,20 +578,11 @@ function resetAll() {
   if (search) search.value = "";
   if (searchMode) searchMode.value = "all";
 
-  [
-    "favoritesOnly",
-    "favoritesFirst",
-    "recentOnly",
-    "recentFirst",
-    "excludeAI",
-    "excludeProblematic"
-  ].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.checked = false;
-  });
-
-  onlyAISupported = false;
-  onlyProblematic = false;
+  ["favoritesOnly", "favoritesFirst", "recentOnly", "recentFirst", "excludeAI", "excludeProblematic"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = false;
+    });
 
   renderList();
 }
@@ -595,17 +627,34 @@ function setup() {
     resetSearchBtn.addEventListener("click", resetAll);
   }
 
-  [
-    "favoritesOnly",
-    "favoritesFirst",
-    "recentOnly",
-    "recentFirst",
-    "excludeAI",
-    "excludeProblematic"
-  ].forEach(id => {
+  ["favoritesOnly", "favoritesFirst", "recentOnly", "recentFirst"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", renderList);
   });
+
+  const excludeAI = document.getElementById("excludeAI");
+  if (excludeAI) {
+    excludeAI.addEventListener("change", () => {
+      if (excludeAI.checked) {
+        addExcludeTermToSearch("AI-Supported");
+      } else {
+        removeTermFromSearch("AI-Supported");
+      }
+      renderList();
+    });
+  }
+
+  const excludeProblematic = document.getElementById("excludeProblematic");
+  if (excludeProblematic) {
+    excludeProblematic.addEventListener("change", () => {
+      if (excludeProblematic.checked) {
+        addExcludeTermToSearch("Problematic History");
+      } else {
+        removeTermFromSearch("Problematic History");
+      }
+      renderList();
+    });
+  }
 
   if (menuToggle && navBar) {
     menuToggle.addEventListener("click", () => {
