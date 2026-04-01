@@ -560,6 +560,16 @@ body {
   line-height: 1;
 }
 
+.video-link {
+  font-size: 1rem;
+  padding: 10px 14px;
+}
+
+.extra-link {
+  font-size: 0.83rem;
+  padding: 7px 11px;
+}
+
 /* STATUS FLAGS */
 .status-flags {
   width: 100%;
@@ -573,13 +583,21 @@ body {
 .status-flag {
   font-size: 11px;
   line-height: 1.2;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 8px;
   border: 1px solid #d8deea;
   background: rgba(255, 255, 255, 0.9);
   color: #4b5563;
   font-family: inherit;
   text-align: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.flag-icon {
+  line-height: 1;
 }
 
 .ai-flag {
@@ -589,9 +607,14 @@ body {
 }
 
 .warning-flag {
-  border-color: rgba(149, 137, 157, 0.42);
-  background: rgba(149, 137, 157, 0.18);
-  color: #584e61;
+  border-color: rgba(215, 88, 88, 0.45);
+  background: rgba(255, 228, 228, 0.95);
+  color: #8a1f1f;
+}
+
+.active-flag {
+  box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.08);
+  border-width: 2px;
 }
 
 /* INFO PAGES */

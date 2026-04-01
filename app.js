@@ -24,8 +24,8 @@ const CATEGORY_GROUPS = [
 ];
 
 let allRows = [];
-let activeKeyword = "";
-let activeLanguage = "";
+let onlyAISupported = false;
+let onlyProblematic = false;
 
 const favorites = new Set(JSON.parse(localStorage.getItem("favorites") || "[]"));
 
@@ -68,10 +68,7 @@ function getField(row, names) {
 }
 
 function getRowId(row, index = 0) {
-  return (
-    getField(row, ["Id", "ID", "id"]) ||
-    `${getField(row, ["Title"])}_${index}`
-  );
+  return getField(row, ["Id", "ID", "id"]) || `${getField(row, ["Title"])}_${index}`;
 }
 
 function getTitle(row) {
@@ -83,14 +80,7 @@ function getCreator(row) {
 }
 
 function getVideoLink(row) {
-  return getField(row, [
-    "Video",
-    "Video_Link",
-    "Video Link",
-    "Link",
-    "URL",
-    "Url"
-  ]);
+  return getField(row, ["Video", "Video_Link", "Video Link", "Link", "URL", "Url"]);
 }
 
 function getExtraLink(row) {
@@ -135,13 +125,11 @@ function isRecent(row) {
 
 function getKeywordValuesByRow(row) {
   const values = [];
-
   CATEGORY_CONFIG.forEach(category => {
     if (category.type === "keyword") {
       values.push(...splitValues(getField(row, [category.key])));
     }
   });
-
   return values;
 }
 
@@ -157,6 +145,15 @@ function getLanguageSearchText(row) {
   return getLanguageValuesByRow(row).join(" ").toLowerCase();
 }
 
+function getCombinedSearchText(row) {
+  return [
+    getTitle(row),
+    getCreator(row),
+    getKeywordValuesByRow(row).join(" "),
+    getLanguageValuesByRow(row).join(" ")
+  ].join(" ").toLowerCase();
+}
+
 function buildPill(text, className) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -165,40 +162,101 @@ function buildPill(text, className) {
   return btn;
 }
 
-function setSearchFromToggle(value, mode) {
+/* =========================
+   BOOLEAN SEARCH
+========================= */
+
+function parseBooleanQuery(input) {
+  const raw = normalize(input);
+  if (!raw) {
+    return { include: [], exclude: [] };
+  }
+
+  const parts = [];
+  const regex = /([+-]?)\s*([^+-]+)/g;
+  let match;
+
+  while ((match = regex.exec(raw)) !== null) {
+    const operator = match[1] || "+";
+    const term = normalize(match[2]);
+    if (!term) continue;
+
+    if (operator === "-") {
+      parts.push({ type: "exclude", term });
+    } else {
+      parts.push({ type: "include", term });
+    }
+  }
+
+  return {
+    include: parts.filter(p => p.type === "include").map(p => p.term),
+    exclude: parts.filter(p => p.type === "exclude").map(p => p.term)
+  };
+}
+
+function buildBooleanQuery(includeTerms, excludeTerms) {
+  const include = includeTerms.map(term => normalize(term)).filter(Boolean);
+  const exclude = excludeTerms.map(term => normalize(term)).filter(Boolean);
+
+  const pieces = [];
+  include.forEach((term, index) => {
+    pieces.push(index === 0 ? term : `+ ${term}`);
+  });
+  exclude.forEach(term => {
+    pieces.push(`- ${term}`);
+  });
+
+  return pieces.join(" ").trim();
+}
+
+function toggleSearchTerm(term, mode) {
   const searchInput = document.getElementById("search");
   const searchMode = document.getElementById("searchMode");
+  const current = parseBooleanQuery(searchInput?.value || "");
 
-  if (searchInput) searchInput.value = value || "";
-  if (searchMode) searchMode.value = mode || "all";
-}
+  const normalizedTerm = lower(term);
+  const include = current.include.filter(t => lower(t) !== normalizedTerm);
+  const exclude = current.exclude.filter(t => lower(t) !== normalizedTerm);
 
-function toggleKeyword(value) {
-  if (activeKeyword === value) {
-    activeKeyword = "";
-    setSearchFromToggle("", "all");
-  } else {
-    activeKeyword = value;
-    activeLanguage = "";
-    setSearchFromToggle(value, "keywords");
+  const wasIncluded = current.include.some(t => lower(t) === normalizedTerm);
+
+  if (!wasIncluded) {
+    include.push(term);
   }
+
+  if (searchInput) {
+    searchInput.value = buildBooleanQuery(include, exclude);
+  }
+
+  if (searchMode) {
+    searchMode.value = mode;
+  }
+
   renderList();
 }
 
-function toggleLanguage(value) {
-  if (activeLanguage === value) {
-    activeLanguage = "";
-    setSearchFromToggle("", "all");
-  } else {
-    activeLanguage = value;
-    activeKeyword = "";
-    setSearchFromToggle(value, "language");
-  }
-  renderList();
+function isTermActiveInSearch(term) {
+  const searchInput = document.getElementById("search");
+  const parsed = parseBooleanQuery(searchInput?.value || "");
+  return parsed.include.some(t => lower(t) === lower(term));
 }
+
+function textMatchesBooleanQuery(text, parsedQuery) {
+  const haystack = lower(text);
+
+  const includesOk = parsedQuery.include.every(term => haystack.includes(lower(term)));
+  const excludesOk = parsedQuery.exclude.every(term => !haystack.includes(lower(term)));
+
+  return includesOk && excludesOk;
+}
+
+/* =========================
+   FILTERING
+========================= */
 
 function getFilteredRows() {
-  const searchText = lower(document.getElementById("search")?.value || "");
+  const searchValue = document.getElementById("search")?.value || "";
+  const parsedQuery = parseBooleanQuery(searchValue);
   const searchMode = document.getElementById("searchMode")?.value || "all";
   const favoritesOnly = !!document.getElementById("favoritesOnly")?.checked;
   const recentOnly = !!document.getElementById("recentOnly")?.checked;
@@ -207,45 +265,30 @@ function getFilteredRows() {
 
   return allRows.filter((row, index) => {
     const rowId = getRowId(row, index);
-    const title = lower(getTitle(row));
-    const creator = lower(getCreator(row));
-    const keywordValues = getKeywordValuesByRow(row);
-    const languageValues = getLanguageValuesByRow(row);
-    const keywordsText = getKeywordSearchText(row);
-    const languageText = getLanguageSearchText(row);
 
     let matchesSearch = true;
 
-    if (searchText) {
+    if (parsedQuery.include.length || parsedQuery.exclude.length) {
       if (searchMode === "title") {
-        matchesSearch = title.includes(searchText);
+        matchesSearch = textMatchesBooleanQuery(getTitle(row), parsedQuery);
       } else if (searchMode === "creator") {
-        matchesSearch = creator.includes(searchText);
+        matchesSearch = textMatchesBooleanQuery(getCreator(row), parsedQuery);
       } else if (searchMode === "keywords") {
-        matchesSearch = keywordsText.includes(searchText);
+        matchesSearch = textMatchesBooleanQuery(getKeywordSearchText(row), parsedQuery);
       } else if (searchMode === "language") {
-        matchesSearch = languageText.includes(searchText);
+        matchesSearch = textMatchesBooleanQuery(getLanguageSearchText(row), parsedQuery);
       } else {
-        matchesSearch =
-          title.includes(searchText) ||
-          creator.includes(searchText) ||
-          keywordsText.includes(searchText) ||
-          languageText.includes(searchText);
+        matchesSearch = textMatchesBooleanQuery(getCombinedSearchText(row), parsedQuery);
       }
     }
 
-    const matchesKeywordToggle =
-      !activeKeyword ||
-      keywordValues.some(value => lower(value) === lower(activeKeyword));
-
-    const matchesLanguageToggle =
-      !activeLanguage ||
-      languageValues.some(value => lower(value) === lower(activeLanguage));
+    const matchesAIOnly = !onlyAISupported || isAISupported(row);
+    const matchesProblematicOnly = !onlyProblematic || hasProblematic(row);
 
     return (
       matchesSearch &&
-      matchesKeywordToggle &&
-      matchesLanguageToggle &&
+      matchesAIOnly &&
+      matchesProblematicOnly &&
       (!favoritesOnly || favorites.has(rowId)) &&
       (!recentOnly || isRecent(row)) &&
       (!excludeAI || !isAISupported(row)) &&
@@ -278,6 +321,10 @@ function sortRows(rows) {
   });
 }
 
+/* =========================
+   RENDER
+========================= */
+
 function buildGroupedKeywords(row) {
   const kw = document.createElement("div");
   kw.className = "keywords";
@@ -306,18 +353,15 @@ function buildGroupedKeywords(row) {
 
         const pill = buildPill(trimmed, config.className);
 
-        if (
-          (config.type === "language" && trimmed === activeLanguage) ||
-          (config.type === "keyword" && trimmed === activeKeyword)
-        ) {
+        if (isTermActiveInSearch(trimmed)) {
           pill.classList.add("active-pill");
         }
 
         pill.addEventListener("click", () => {
           if (config.type === "language") {
-            toggleLanguage(trimmed);
+            toggleSearchTerm(trimmed, "language");
           } else {
-            toggleKeyword(trimmed);
+            toggleSearchTerm(trimmed, "keywords");
           }
         });
 
@@ -335,14 +379,23 @@ function buildGroupedKeywords(row) {
   return kw;
 }
 
-function buildLinkButton(href, label, icon) {
+function buildLinkButton(href, label, icon, extraClass = "") {
   const a = document.createElement("a");
   a.href = href;
   a.target = "_blank";
   a.rel = "noopener noreferrer";
-  a.className = "icon-link";
+  a.className = `icon-link ${extraClass}`.trim();
   a.innerHTML = `<span class="link-icon">${icon}</span><span>${label}</span>`;
   return a;
+}
+
+function buildStatusFlag(label, icon, className, isActive, onClick) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = `status-flag ${className} ${isActive ? "active-flag" : ""}`.trim();
+  btn.innerHTML = `<span class="flag-icon">${icon}</span><span>${label}</span>`;
+  btn.addEventListener("click", onClick);
+  return btn;
 }
 
 function renderList() {
@@ -420,28 +473,44 @@ function renderList() {
     const extraLink = getExtraLink(row);
 
     if (videoLink) {
-      links.appendChild(buildLinkButton(videoLink, "Video", "🎬"));
+      links.appendChild(buildLinkButton(videoLink, "Video", "🎬", "video-link"));
     }
 
     if (extraLink) {
-      links.appendChild(buildLinkButton(extraLink, "Extra", "📎"));
+      links.appendChild(buildLinkButton(extraLink, "Extra", "📎", "extra-link"));
     }
 
     const statusFlags = document.createElement("div");
     statusFlags.className = "status-flags";
 
     if (isAISupported(row)) {
-      const f = document.createElement("div");
-      f.className = "status-flag ai-flag";
-      f.textContent = "AI-Supported";
-      statusFlags.appendChild(f);
+      statusFlags.appendChild(
+        buildStatusFlag(
+          "AI-Supported",
+          "💻",
+          "ai-flag",
+          onlyAISupported,
+          () => {
+            onlyAISupported = !onlyAISupported;
+            renderList();
+          }
+        )
+      );
     }
 
     if (hasProblematic(row)) {
-      const f = document.createElement("div");
-      f.className = "status-flag warning-flag";
-      f.textContent = "Problematic History";
-      statusFlags.appendChild(f);
+      statusFlags.appendChild(
+        buildStatusFlag(
+          "Problematic History",
+          "🚩",
+          "warning-flag",
+          onlyProblematic,
+          () => {
+            onlyProblematic = !onlyProblematic;
+            renderList();
+          }
+        )
+      );
     }
 
     if (statusFlags.children.length) {
@@ -456,6 +525,10 @@ function renderList() {
     list.appendChild(card);
   });
 }
+
+/* =========================
+   RESET / FAVORITES / SETUP
+========================= */
 
 function resetAll() {
   const search = document.getElementById("search");
@@ -476,8 +549,8 @@ function resetAll() {
     if (el) el.checked = false;
   });
 
-  activeKeyword = "";
-  activeLanguage = "";
+  onlyAISupported = false;
+  onlyProblematic = false;
 
   renderList();
 }
@@ -511,19 +584,11 @@ function setup() {
   const navBar = document.getElementById("navBar");
 
   if (search) {
-    search.addEventListener("input", () => {
-      activeKeyword = "";
-      activeLanguage = "";
-      renderList();
-    });
+    search.addEventListener("input", renderList);
   }
 
   if (searchMode) {
-    searchMode.addEventListener("change", () => {
-      activeKeyword = "";
-      activeLanguage = "";
-      renderList();
-    });
+    searchMode.addEventListener("change", renderList);
   }
 
   if (resetSearchBtn) {
