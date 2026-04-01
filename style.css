@@ -408,7 +408,7 @@ body {
 /* COLUMN-BASED KEYWORD COLORS */
 .early-literacy-pill {
   background: rgba(200, 85, 92, 0.14);
-  color: var(--kw1);
+  color: #000;
   border-color: rgba(200, 85, 92, 0.28);
 }
 .early-literacy-pill.active-pill {

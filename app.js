@@ -5,18 +5,18 @@ const CSV_PATH = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ14cW0LzMG6hP
 ========================= */
 const CATEGORY_CONFIG = [
   { key: "Early_Literacy_Skill", className: "early-literacy-pill", type: "keyword" },
-  { key: "Physical_Skill", className: "developmental-pill", type: "keyword" },
-  { key: "Cognitive_Skill", className: "developmental-pill", type: "keyword" },
-  { key: "Social_Emotional_Skill", className: "social-skill-pill", type: "keyword" },
-  { key: "Concept", className: "theme-pill", type: "keyword" },
+  { key: "Physical_Skill", className: "physical-skill-pill", type: "keyword" },
+  { key: "Cognitive_Skill", className: "cognitive-skill-pill", type: "keyword" },
+  { key: "Social_Emotional_Skill", className: "social-emotional-skill-pill", type: "keyword" },
+  { key: "Concept", className: "concept-pill", type: "keyword" },
   { key: "Theme", className: "theme-pill", type: "keyword" },
   { key: "Tune", className: "tune-pill", type: "keyword" },
   { key: "Language", className: "language-pill", type: "language" },
   { key: "Prop", className: "prop-pill", type: "keyword" },
 
   /* swapped */
-  { key: "Music_Genre", className: "song-type-pill", type: "keyword" },
-  { key: "Format", className: "music-genre-pill", type: "keyword" },
+  { key: "Music_Genre", className: "music-genre-pill", type: "keyword" },
+  { key: "Format", className: "format-pill", type: "keyword" },
 
   { key: "Music_Source", className: "recorded-music-pill", type: "keyword" }
 ];
